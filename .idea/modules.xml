@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/plugins/at.ac.tuwien.big.moea/at.ac.tuwien.big.moea.iml" filepath="$PROJECT_DIR$/plugins/at.ac.tuwien.big.moea/at.ac.tuwien.big.moea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/at.ac.tuwien.big.momot.core/at.ac.tuwien.big.momot.core.iml" filepath="$PROJECT_DIR$/plugins/at.ac.tuwien.big.momot.core/at.ac.tuwien.big.momot.core.iml" />
+    </modules>
+  </component>
+</project>
