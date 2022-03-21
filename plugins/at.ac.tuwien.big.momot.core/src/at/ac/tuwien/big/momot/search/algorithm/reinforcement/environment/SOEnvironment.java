@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.eclipse.emf.henshin.interpreter.RuleApplication;
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.Variable;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 public class SOEnvironment<S extends Solution> extends AbstractEnvironment<S> implements ISOEnvironment<S> {
@@ -94,6 +95,10 @@ public class SOEnvironment<S extends Solution> extends AbstractEnvironment<S> im
          }
       }
 
+      if(nextState.getVariable(nextState.getNumberOfVariables() - 1) instanceof IPlaceholderVariable) {
+         System.out.println("Got placeholder");
+      }
+
       return nextState;
    }
 
@@ -121,7 +126,21 @@ public class SOEnvironment<S extends Solution> extends AbstractEnvironment<S> im
                for(final S solution : this.solutionProvider.generateNeighbors(currentState, 1, this.encodingStrategy)) {
                   nextState = solution;
                }
+
+               // if(nextState.getVariable(nextState.getNumberOfVariables() - 1) instanceof IPlaceholderVariable) {
+               // System.out.println("Got placeholder");
+               // }
+
+               final Variable v = nextState.getVariable(nextState.getNumberOfVariables() - 1);
                evaluteSolution(nextState);
+
+               // if(nextState.getVariable(nextState.getNumberOfVariables() - 1) instanceof IPlaceholderVariable) {
+               // System.out.println("Got placeholder");
+               // nextState.setVariable(nextState.getNumberOfVariables() - 1, v);
+               // evaluteSolution(nextState);
+               //
+               // }
+
                break;
          }
 
@@ -131,6 +150,10 @@ public class SOEnvironment<S extends Solution> extends AbstractEnvironment<S> im
       }
 
       response.setDone(determineIsEpisodeDone(nextState));
+
+      // if(nextState.getVariable(nextState.getNumberOfVariables() - 1) instanceof IPlaceholderVariable) {
+      // System.out.println("Got placeholder");
+      // }
 
       if(nextState != null && nextState.getNumberOfVariables() > currentState.getNumberOfVariables()) {
          response.setReward(determineReward(nextState));

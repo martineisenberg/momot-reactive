@@ -14,9 +14,8 @@ public class SOQTable<S, A> extends QTable<S, A, Double> implements ISOQTableAcc
       A a = null;
       double maxReward = Double.NEGATIVE_INFINITY;
       final Map<A, Double> actionTable = this.table.get(s);
-
       for(final A choosableAction : actionTable.keySet()) {
-         if(actionTable.get(choosableAction) > maxReward) {
+         if(actionTable.get(choosableAction) >= maxReward) {
             a = choosableAction;
             maxReward = actionTable.get(choosableAction);
          }
@@ -34,7 +33,7 @@ public class SOQTable<S, A> extends QTable<S, A, Double> implements ISOQTableAcc
 
       final Map<A, Double> actionTable = this.table.get(s);
       for(final A choosableAction : actionTable.keySet()) {
-         if(actionTable.get(choosableAction) > maxReward) {
+         if(actionTable.get(choosableAction) >= maxReward) {
             maxReward = actionTable.get(choosableAction);
          }
       }

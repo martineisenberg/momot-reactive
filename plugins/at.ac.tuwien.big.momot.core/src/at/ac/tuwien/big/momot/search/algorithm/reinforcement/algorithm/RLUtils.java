@@ -193,6 +193,27 @@ public class RLUtils<S extends Solution> implements IRLUtils<S> {
    }
 
    @Override
+   public ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> loadSOQTable(final S s) {
+
+      if(s == null) {
+         return null;
+      }
+      final SOQTable<List<ApplicationState>, List<ApplicationState>> o = new SOQTable<>();
+
+      final TransformationSolution ts = (TransformationSolution) s;
+
+      final List<ApplicationState> as = this.getApplicationStates(s);
+      for(int i = 0; i < as.size(); i++) {
+
+         final List<ApplicationState> stateRepr = as.subList(0, i);
+         o.addStateIfNotExists(stateRepr);
+         o.update(stateRepr, i < as.size() - 1 ? as.subList(i, i + 1) : List.of(as.get(i)), Double.NEGATIVE_INFINITY);
+
+      }
+      return o;
+   }
+
+   @Override
    public ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> loadSOQTable(final String inputSrc,
          final Map<String, Unit> unitMapping) {
       SOQTable<List<ApplicationState>, List<ApplicationState>> o = null;

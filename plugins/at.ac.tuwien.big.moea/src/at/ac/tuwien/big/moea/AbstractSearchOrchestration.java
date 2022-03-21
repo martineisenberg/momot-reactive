@@ -22,6 +22,8 @@ import at.ac.tuwien.big.moea.search.algorithm.EvolutionaryAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.LocalSearchAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.RLAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.provider.IRegisteredAlgorithm;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ISOQTableAccessor;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.IEnvironment;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.ISolutionExtender;
 import at.ac.tuwien.big.moea.search.fitness.IMultiDimensionalFitnessFunction;
@@ -149,12 +151,13 @@ public abstract class AbstractSearchOrchestration<S extends Solution> implements
    }
 
    @Override
-   public RLAlgorithmFactory<S> createRLAlgorithmFactory(final Map<IEnvironment.Type, IEnvironment<S>> environmentMap) {
+   public RLAlgorithmFactory<S> createRLAlgorithmFactory(final Map<IEnvironment.Type, IEnvironment<S>> environmentMap,
+         final ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableInitialized) {
 
       for(final IEnvironment<S> env : environmentMap.values()) {
          env.setSolutionProvider(this.solutionExtender);
       }
-      return new RLAlgorithmFactory<>(this, environmentMap);
+      return new RLAlgorithmFactory<>(this, environmentMap, qTableInitialized);
    }
 
    protected abstract IRandomSolutionGenerator<S> createSolutionGenerator();

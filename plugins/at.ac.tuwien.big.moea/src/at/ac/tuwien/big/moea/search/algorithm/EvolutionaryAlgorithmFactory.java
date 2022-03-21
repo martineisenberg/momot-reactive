@@ -42,7 +42,8 @@ public class EvolutionaryAlgorithmFactory<S extends Solution> extends AbstractAl
    protected int populationSize = 100;
    protected List<S> initialSolutions = new ArrayList<>();
 
-   public EvolutionaryAlgorithmFactory() {}
+   public EvolutionaryAlgorithmFactory() {
+   }
 
    public EvolutionaryAlgorithmFactory(final ISearchOrchestration<S> searchOrchestration) {
       setSearchOrchestration(searchOrchestration);
@@ -50,6 +51,10 @@ public class EvolutionaryAlgorithmFactory<S extends Solution> extends AbstractAl
 
    public void addInitialSolution(final S solution) {
       this.initialSolutions.add(solution);
+   }
+
+   public void addInitialSolutions(final List<S> solutions) {
+      this.initialSolutions.addAll(solutions);
    }
 
    public IRegisteredAlgorithm<AdaptiveTimeContinuation> createENSGAII(final double injectionRate,

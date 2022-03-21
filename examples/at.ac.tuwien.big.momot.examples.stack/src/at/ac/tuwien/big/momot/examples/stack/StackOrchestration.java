@@ -17,13 +17,30 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.emf.henshin.interpreter.EGraph;
+
 public class StackOrchestration extends TransformationSearchOrchestration {
 
    private int maxShift = 5;
 
+   public StackOrchestration(final EGraph initialGraph, final int nrVariables) {
+      super(new ModuleManager(".", Paths.get("model", "stack.henshin").toString()), initialGraph, nrVariables);
+
+      this.initOrchestration();
+
+   }
+
    public StackOrchestration(final String initialGraphPath, final int nrVariables) {
       super(new ModuleManager(".", Paths.get("model", "stack.henshin").toString()), initialGraphPath, nrVariables);
 
+      this.initOrchestration();
+   }
+
+   public int getMaxShift() {
+      return maxShift;
+   }
+
+   private void initOrchestration() {
       final IEGraphMultiDimensionalFitnessFunction fitnessFunction = getFitnessFunction();
       fitnessFunction.setSolutionRepairer(new TransformationPlaceholderRepairer()); // replace not executed rules with
                                                                                     // empty rules
@@ -57,10 +74,6 @@ public class StackOrchestration extends TransformationSearchOrchestration {
       moduleManager.setParameterValue(StackModule.ShiftLeft.Parameter.AMOUNT, new RandomIntegerValue(1, getMaxShift()));
       moduleManager.setParameterValue(StackModule.ShiftRight.Parameter.AMOUNT,
             new RandomIntegerValue(1, getMaxShift()));
-   }
-
-   public int getMaxShift() {
-      return maxShift;
    }
 
    public void setMaxShift(final int maxShift) {

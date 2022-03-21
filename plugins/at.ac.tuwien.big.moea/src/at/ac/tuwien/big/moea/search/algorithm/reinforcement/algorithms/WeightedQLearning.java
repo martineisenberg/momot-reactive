@@ -2,6 +2,7 @@ package at.ac.tuwien.big.moea.search.algorithm.reinforcement.algorithms;
 
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.AbstractMOTabularRLAgent;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.IMOQTableAccessor;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.DoneStatus;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.IMOEnvironment;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.MOEnvResponse;
@@ -33,8 +34,9 @@ public class WeightedQLearning<S extends Solution> extends AbstractMOTabularRLAg
    public WeightedQLearning(final double[] w, final double tau, final LocalSearchStrategy localSearchStrategy,
          final int exploreSteps, final double gamma, final double eps, final boolean withEpsDecay,
          final double epsDecay, final double epsMinimum, final Problem problem, final IMOEnvironment<S> environment,
-         final String savePath, final int recordInterval, final int terminateAfterEpisodes, final String qTableIn,
-         final String qTableOut, final boolean verbose) {
+         final String savePath, final int recordInterval, final int terminateAfterEpisodes,
+         final IMOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableIn, final String qTableOut,
+         final boolean verbose) {
       super(problem, environment, savePath, recordInterval, terminateAfterEpisodes, qTableIn, qTableOut, verbose);
 
       this.gamma = gamma;

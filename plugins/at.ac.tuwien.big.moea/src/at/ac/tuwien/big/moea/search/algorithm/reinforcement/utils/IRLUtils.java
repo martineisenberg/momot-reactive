@@ -31,6 +31,8 @@ public interface IRLUtils<S extends Solution> {
    IParetoQTableAccessor<List<ApplicationState>, List<ApplicationState>> loadParetoQTable(String qTableIn,
          Map<String, Unit> unitMapping);
 
+   ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> loadSOQTable(final S s);
+
    ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> loadSOQTable(final String inputSrc,
          Map<String, Unit> unitMapping);
 

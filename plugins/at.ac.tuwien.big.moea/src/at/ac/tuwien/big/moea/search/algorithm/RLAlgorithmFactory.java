@@ -2,10 +2,14 @@ package at.ac.tuwien.big.moea.search.algorithm;
 
 import at.ac.tuwien.big.moea.ISearchOrchestration;
 import at.ac.tuwien.big.moea.search.algorithm.provider.AbstractRegisteredAlgorithm;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.algorithms.NegotiatedWLearning;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.algorithms.ParetoQLearning;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.algorithms.SingleObjectiveQLearning;
-import at.ac.tuwien.big.moea.search.algorithm.reinforcement.algorithms.NegotiatedWLearning;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.algorithms.WeightedQLearning;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.IMOQTableAccessor;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.IParetoQTableAccessor;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ISOQTableAccessor;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.IEnvironment;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.IMOEnvironment;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.ISOEnvironment;
@@ -20,6 +24,7 @@ import at.ac.tuwien.big.moea.search.algorithm.reinforcement.utils.LocalSearchStr
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import org.deeplearning4j.nn.graph.ComputationGraph;
@@ -33,6 +38,7 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
    protected S initialSolution;
    protected Map<IEnvironment.Type, IEnvironment<S>> environmentMap;
 
+   protected ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableInitialized;
    // public RLAlgorithmFactory(final ISearchOrchestration<S> searchOrchestration, final List<String>
    // episodeEndingRules,
    // final Map<String, Double> rewardMap, final INeighborhoodFunction<S> neighborhoodFunction,
@@ -44,13 +50,15 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
    // }
 
    public RLAlgorithmFactory(final ISearchOrchestration<S> searchOrchestration,
-         final Map<IEnvironment.Type, IEnvironment<S>> environmentMap) {
+         final Map<IEnvironment.Type, IEnvironment<S>> environmentMap,
+         final ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableInitialized) {
       setSearchOrchestration(searchOrchestration);
       for(final IEnvironment<S> env : environmentMap.values()) {
          env.setInitialSolution(this.getInitialSolution());
          env.setSolutionLength(searchOrchestration.getProblem().getNumberOfVariables());
       }
       this.environmentMap = environmentMap;
+      this.qTableInitialized = qTableInitialized;
       this.outputPath = Paths.get("output", "rl").toString();
       final File f = new File(outputPath).getAbsoluteFile();
       if(!f.exists()) {
@@ -121,8 +129,9 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
    public AbstractRegisteredAlgorithm<WeightedQLearning<S>> createChebyshevQLearner(final double[] w, final double tau,
          final LocalSearchStrategy localSearchStrategy, final int explorationSteps, final double gamma,
          final double eps, final boolean withEpsDecay, final double epsDecay, final double epsMinimum,
-         final String savePath, final int recordInterval, final int terminateAfterEpisodes, final String qTableIn,
-         final String qTableOut, final boolean verbose) {
+         final String savePath, final int recordInterval, final int terminateAfterEpisodes,
+         final IMOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableIn, final String qTableOut,
+         final boolean verbose) {
 
       if(!this.getEnvironments().containsKey(IEnvironment.Type.MOValueBasedEnvironment)) {
          throw new RuntimeException(
@@ -144,7 +153,9 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
          final LocalSearchStrategy localSearchStrategy, final int explorationSteps, final double gamma,
          final EvaluationStrategy evaluationStrategy, final double eps, final boolean withEpsDecay,
          final double epsDecay, final double epsMinimum, final String savePath, final int recordInterval,
-         final int terminateAfterEpisodes, final String qTableIn, final String qTableOut, final boolean verbose) {
+         final int terminateAfterEpisodes,
+         final IParetoQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableIn, final String qTableOut,
+         final boolean verbose) {
 
       if(!this.getEnvironments().containsKey(IEnvironment.Type.MOValueBasedEnvironment)) {
          throw new RuntimeException(
@@ -272,13 +283,16 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
                "None of the environments passed to RLAlgorithmFactory is of type  \"SOValueBasedEnvironment\"!");
       }
 
+      // final ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qtableAcc = getSOValueEnvironment()
+      // .getRLUtils().loadSOQTable(reInitSolution);
+
       return new AbstractRegisteredAlgorithm<SingleObjectiveQLearning<S>>() {
          @Override
          public SingleObjectiveQLearning<S> createAlgorithm() {
             return new SingleObjectiveQLearning<>(LocalSearchStrategy.GREEDY, explorationSteps, gamma, eps,
                   withEpsDecay, epsDecay, epsMinimum, createProblem(), getSOValueEnvironment(),
                   savePath != null ? Paths.get(getOutputPath(), "rewards", savePath).toString() : null, recordInterval,
-                  terminateAfterEpisodes, qTableIn, qTableOut, verbose);
+                  terminateAfterEpisodes, qTableInitialized, qTableOut, verbose);
          }
       };
    }
@@ -314,13 +328,16 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
                "None of the environments passed to RLAlgorithmFactory is of type  \"SOValueBasedEnvironment\"!");
       }
 
+      // final ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qtableAcc = getSOValueEnvironment()
+      // .getRLUtils().loadSOQTable(reInitSolution);
+
       return new AbstractRegisteredAlgorithm<SingleObjectiveQLearning<S>>() {
          @Override
          public SingleObjectiveQLearning<S> createAlgorithm() {
             return new SingleObjectiveQLearning<>(LocalSearchStrategy.NONE, 1, gamma, eps, withEpsDecay, epsDecay,
                   epsMinimum, createProblem(), getSOValueEnvironment(),
                   savePath != null ? Paths.get(getOutputPath(), "rewards", savePath).toString() : null, recordInterval,
-                  terminateAfterEpisodes, qTableIn, qTableOut, verbose);
+                  terminateAfterEpisodes, qTableInitialized, qTableOut, verbose);
          }
       };
    }
@@ -328,8 +345,9 @@ public class RLAlgorithmFactory<S extends Solution> extends AbstractAlgorithmFac
    public AbstractRegisteredAlgorithm<NegotiatedWLearning<S>> createTournamentQLearner(
          final LocalSearchStrategy localSearchStrategy, final int explorationSteps, final double gamma,
          final double eps, final boolean withEpsDecay, final double epsDecay, final double epsMinimum,
-         final String savePath, final int recordInterval, final int terminateAfterEpisodes, final String qTableIn,
-         final String qTableOut, final boolean verbose) {
+         final String savePath, final int recordInterval, final int terminateAfterEpisodes,
+         final IMOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableIn, final String qTableOut,
+         final boolean verbose) {
 
       if(!this.getEnvironments().containsKey(IEnvironment.Type.MOValueBasedEnvironment)) {
          throw new RuntimeException(

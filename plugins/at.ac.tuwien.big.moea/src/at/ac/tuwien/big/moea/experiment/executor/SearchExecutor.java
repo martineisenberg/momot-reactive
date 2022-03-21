@@ -292,6 +292,8 @@ public class SearchExecutor extends Executor {
          getProgressHelper().setCurrentAlgorithm(null);
 
          result.addAll(algorithm.getResult());
+         algorithm.terminate();
+
       } finally {
          if(algorithm != null) {
             algorithm.terminate();

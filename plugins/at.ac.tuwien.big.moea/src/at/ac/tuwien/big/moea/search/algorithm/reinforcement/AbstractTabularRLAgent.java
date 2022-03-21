@@ -34,9 +34,8 @@ public abstract class AbstractTabularRLAgent<S extends Solution> extends Abstrac
    protected boolean verbose;
    protected NondominatedPopulation population;
 
-   protected AbstractTabularRLAgent(final Problem problem, final IEnvironment<S> environment,
-         final String savePath, final int recordInterval, final int terminateAfterEpisodes, final String qTableIn,
-         final String qTableOut, final boolean verbose) {
+   protected AbstractTabularRLAgent(final Problem problem, final IEnvironment<S> environment, final String savePath,
+         final int recordInterval, final int terminateAfterEpisodes, final String qTableOut, final boolean verbose) {
       super(problem);
 
       this.terminateAfterEpisodes = terminateAfterEpisodes;
@@ -72,7 +71,6 @@ public abstract class AbstractTabularRLAgent<S extends Solution> extends Abstrac
 
       this.utils = environment.getRLUtils();
 
-      this.qTableIn = qTableIn;
       this.qTableOut = qTableOut;
 
    }

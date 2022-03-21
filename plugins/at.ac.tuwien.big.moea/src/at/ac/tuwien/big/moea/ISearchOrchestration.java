@@ -19,6 +19,8 @@ import at.ac.tuwien.big.moea.search.algorithm.EvolutionaryAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.LocalSearchAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.RLAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.provider.IRegisteredAlgorithm;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ISOQTableAccessor;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.IEnvironment;
 import at.ac.tuwien.big.moea.search.fitness.IMultiDimensionalFitnessFunction;
 import at.ac.tuwien.big.moea.search.solution.generator.IInjectedPopulationGenerator;
@@ -61,7 +63,8 @@ public interface ISearchOrchestration<S extends Solution> {
 
    ISearchProblem<S> createProblem();
 
-   RLAlgorithmFactory<S> createRLAlgorithmFactory(final Map<IEnvironment.Type, IEnvironment<S>> environmentMap);
+   RLAlgorithmFactory<S> createRLAlgorithmFactory(final Map<IEnvironment.Type, IEnvironment<S>> environmentMap,
+         ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableInitialized);
 
    ISolutionWriter<S> createSolutionWriter();
 

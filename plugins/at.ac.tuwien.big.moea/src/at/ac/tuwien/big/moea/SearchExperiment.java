@@ -18,6 +18,7 @@ import org.moeaframework.analysis.collector.Collector;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.TerminationCondition;
 import org.moeaframework.util.progress.ProgressListener;
 
 public class SearchExperiment<S extends Solution> extends IndicatorConfiguration {
@@ -40,6 +41,7 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
 
    // execution
    protected int maxEvaluations;
+   protected TerminationCondition terminationCondition;
    protected double[] epsilon;
    protected List<ProgressListener> progressListeners = new ArrayList<>();
 
@@ -57,9 +59,22 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
    }
 
    public SearchExperiment(final ISearchOrchestration<S> searchOrchestration, final int maxEvaluations) {
+      this(searchOrchestration, maxEvaluations, null);
+   }
+
+   public SearchExperiment(final ISearchOrchestration<S> searchOrchestration, final int maxEvaluations,
+         final TerminationCondition terminationCondition) {
 
       setSearchOrchestration(searchOrchestration);
+      setTerminationCondition(terminationCondition);
       setMaxEvaluations(maxEvaluations);
+   }
+
+   public SearchExperiment(final ISearchOrchestration<S> searchOrchestration,
+         final TerminationCondition terminationCondition) {
+
+      this(searchOrchestration, Integer.MAX_VALUE, terminationCondition);
+
    }
 
    public void addCustomCollector(final Collector collector) {
@@ -81,9 +96,14 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
       final List<SearchExecutor> executors = new ArrayList<>();
       for(final IRegisteredAlgorithm<? extends Algorithm> algorithm : getSearchOrchestration().getAlgorithms()) {
          final SearchExecutor executor = new SearchExecutor(createProblem()).setName(getAlgorithmName(algorithm))
-               .withMaxEvaluations(getMaxEvaluations()).withInstrumenter(createInstrumenter())
-
+               .withInstrumenter(createInstrumenter())
+               .withMaxEvaluations(getMaxEvaluations() <= 0 && getTerminationCondition() != null ? Integer.MAX_VALUE
+                     : getMaxEvaluations())
                .withAlgorithm(algorithm.getRegisteredName()).withEpsilon(getEpsilon()).distributeOnAllCores();
+         if(getTerminationCondition() != null) {
+            executor.withTerminationCondition(getTerminationCondition());
+         }
+
          attachProgressListeners(executor);
          executors.add(executor);
       }
@@ -212,6 +232,10 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
       return searchOrchestration;
    }
 
+   public TerminationCondition getTerminationCondition() {
+      return this.terminationCondition;
+   }
+
    public boolean hasResults() {
       return !results.isEmpty();
    }
@@ -245,15 +269,17 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
    }
 
    public Map<SearchExecutor, List<NondominatedPopulation>> run(final int nrRuns) {
-      if(getMaxEvaluations() == 0) {
-         System.err
-               .println("Warning: Missing maximum number of evaluations in experiment. No search will be executed.");
+      if(getMaxEvaluations() == 0 && getTerminationCondition() == null) {
+         System.err.println(
+               "Warning: Missing maximum number of evaluations in experiment and no termination criterion set. No search will be executed.");
       }
 
       final List<SearchExecutor> executors = createExecutors();
 
       for(final SearchExecutor executor : executors) {
-         System.out.println("Run '" + executor.getName() + "' " + nrRuns + " times...");
+         // System.out.println("Run '" + executor.getName() + "' " + nrRuns + " times...");
+         System.out.println("Init planning with '" + executor.getName() + "'...");
+
          results.put(executor, executor.runSeeds(nrRuns));
       }
       return results;
@@ -327,5 +353,9 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
 
    public void setSearchOrchestration(final ISearchOrchestration<S> searchOrchestration) {
       this.searchOrchestration = searchOrchestration;
+   }
+
+   public void setTerminationCondition(final TerminationCondition condition) {
+      this.terminationCondition = condition;
    }
 }

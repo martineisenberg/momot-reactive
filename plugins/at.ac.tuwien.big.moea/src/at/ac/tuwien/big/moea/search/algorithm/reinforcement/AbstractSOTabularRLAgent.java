@@ -8,12 +8,12 @@ import at.ac.tuwien.big.moea.search.algorithm.reinforcement.utils.FileManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.moeaframework.algorithm.AlgorithmTerminationException;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Problem;
 import org.moeaframework.core.Solution;
 
-public abstract class AbstractSOTabularRLAgent<S extends Solution>
-      extends AbstractTabularRLAgent<S> {
+public abstract class AbstractSOTabularRLAgent<S extends Solution> extends AbstractTabularRLAgent<S> {
 
    protected ISOEnvironment<S> environment;
 
@@ -23,18 +23,19 @@ public abstract class AbstractSOTabularRLAgent<S extends Solution>
    protected final ArrayList<Double> meanRewardEarned;
    protected double cumReward;
 
-   public AbstractSOTabularRLAgent(final Problem problem, final ISOEnvironment<S> environment,
-         final String savePath, final int recordInterval, final int terminateAfterEpisodes, final String qTableIn,
-         final String qTableOut, final boolean verbose) {
-      super(problem, environment, savePath, recordInterval, terminateAfterEpisodes, qTableIn, qTableOut, verbose);
+   public AbstractSOTabularRLAgent(final Problem problem, final ISOEnvironment<S> environment, final String savePath,
+         final int recordInterval, final int terminateAfterEpisodes,
+         final ISOQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableIn, final String qTableOut,
+         final boolean verbose) {
+      super(problem, environment, savePath, recordInterval, terminateAfterEpisodes, qTableOut, verbose);
 
       this.cumReward = 0;
       this.environment = environment;
       this.rewardEarned = new ArrayList<>();
       this.meanRewardEarned = new ArrayList<>();
 
-      if(this.qTableIn != null) {
-         this.qTable = this.utils.loadSOQTable(qTableIn, environment.getUnitMapping());
+      if(qTableIn != null) {
+         this.qTable = qTableIn;
       } else {
          this.qTable = this.utils.initSOQTable(environment.getUnitMapping());
          this.qTable.addStateIfNotExists(new ArrayList<>());
@@ -58,6 +59,16 @@ public abstract class AbstractSOTabularRLAgent<S extends Solution>
       lll.add((ArrayList<Double>) secondsPassed);
       FileManager.saveBenchMark("evaluations;reward;averageReward;runtime in ms;", lll,
             scoreSavePath + "_" + FileManager.milliSecondsToFormattedDate(this.startTime) + ".csv");
+   }
+
+   @Override
+   public void terminate() {
+      if(terminated) {
+         throw new AlgorithmTerminationException(this, "algorithm already terminated");
+      }
+
+      terminated = true;
+      this.qTable = null;
    }
 
 }

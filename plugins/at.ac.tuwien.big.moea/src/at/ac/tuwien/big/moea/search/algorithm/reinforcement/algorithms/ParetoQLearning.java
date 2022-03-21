@@ -39,9 +39,10 @@ public class ParetoQLearning<S extends Solution> extends AbstractMOTabularRLAgen
    public ParetoQLearning(final LocalSearchStrategy localSearchStrategy, final int exploreSteps, final double gamma,
          final EvaluationStrategy strategy, final double eps, final boolean withEpsDecay, final double epsDecay,
          final double epsMinimum, final Problem problem, final IMOEnvironment<S> environment, final String savePath,
-         final int recordInterval, final int terminateAfterEpisodes, final String qTableIn, final String qTableOut,
+         final int recordInterval, final int terminateAfterEpisodes,
+         final IParetoQTableAccessor<List<ApplicationState>, List<ApplicationState>> qTableIn, final String qTableOut,
          final boolean verbose) {
-      super(problem, environment, savePath, recordInterval, terminateAfterEpisodes, qTableIn, qTableOut, verbose);
+      super(problem, environment, savePath, recordInterval, terminateAfterEpisodes, qTableOut, verbose);
 
       this.qStateNDP = new HashMap<>();
       this.gamma = gamma;
@@ -55,7 +56,7 @@ public class ParetoQLearning<S extends Solution> extends AbstractMOTabularRLAgen
       this.localSearchStrategy = localSearchStrategy;
 
       if(this.qTableIn != null) {
-         this.qTable = this.utils.loadParetoQTable(qTableIn, environment.getUnitMapping());
+         this.qTable = qTableIn;
       } else {
          this.qTable = this.utils.initParetoQTable(environment.getUnitMapping());
          this.qTable.addStateIfNotExists(new ArrayList<>());
