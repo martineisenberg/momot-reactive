@@ -1,0 +1,65 @@
+package at.ac.tuwien.big.momot.reactive.result;
+
+import at.ac.tuwien.big.momot.reactive.error.Disturbance;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ReactiveRunResult {
+   private float finalObjective;
+   private final List<Double> runtimes;
+   private final List<Number> evaluations;
+   private final List<Disturbance> disturbances;
+   private final List<PredictiveRunResult> predictiveRunResults;
+   private int failedExecutions;
+
+   public ReactiveRunResult() {
+      this.runtimes = new ArrayList<>();
+      this.evaluations = new ArrayList<>();
+      this.disturbances = new ArrayList<>();
+      this.failedExecutions = 0;
+      this.predictiveRunResults = new ArrayList<>();
+   }
+
+   public void addDisturbance(final Disturbance d) {
+      this.disturbances.add(d);
+   }
+
+   public void addPlanningStats(final double runtime, final double evaluations) {
+      this.runtimes.add(runtime);
+      this.evaluations.add(evaluations);
+   }
+
+   public void addPredictiveRunResult(final PredictiveRunResult prr) {
+      this.predictiveRunResults.add(prr);
+   }
+
+   public List<Disturbance> getDisturbances() {
+      return this.disturbances;
+   }
+
+   public List<Number> getEvaluations() {
+      return this.evaluations;
+   }
+
+   public int getFailedExecutions() {
+      return this.failedExecutions;
+   }
+
+   public float getFinalObjective() {
+      return this.finalObjective;
+   }
+
+   public List<Double> getRuntimes() {
+      return this.runtimes;
+   }
+
+   public void setFailedExecutions(final int failedExecutions) {
+      this.failedExecutions = failedExecutions;
+   }
+
+   public void setFinalObjective(final float finalObjective) {
+      this.finalObjective = finalObjective;
+   }
+
+}

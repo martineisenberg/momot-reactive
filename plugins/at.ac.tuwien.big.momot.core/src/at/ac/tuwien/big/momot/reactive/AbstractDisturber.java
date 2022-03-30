@@ -1,10 +1,22 @@
 package at.ac.tuwien.big.momot.reactive;
 
+import at.ac.tuwien.big.momot.examples.stack.stack.Stack;
+import at.ac.tuwien.big.momot.examples.stack.stack.StackModel;
+import at.ac.tuwien.big.momot.examples.stack.stack.StackPackage;
+import at.ac.tuwien.big.momot.examples.stack.stack.impl.StackImpl;
 import at.ac.tuwien.big.momot.problem.solution.variable.ITransformationVariable;
+import at.ac.tuwien.big.momot.reactive.error.Disturbance;
 import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
+import at.ac.tuwien.big.momot.util.MomotUtil;
 
 import java.util.Random;
+
+import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EClassifier;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.henshin.interpreter.EGraph;
 
 public abstract class AbstractDisturber {
 
@@ -12,20 +24,25 @@ public abstract class AbstractDisturber {
       protected ErrorType eType;
 
       protected ErrorOccurence eOccurence;
-      protected float eProbability;
       protected ModelRuntimeEnvironment mre;
-      protected int maxSteps;
       protected int maxNrOfDisturbances;
+      protected int errorsPerDisturbance;
+      public float eProbability;
 
       public abstract AbstractDisturber build();
 
-      public AbstractDisturberBuilder maxNrOfDisturbances(final int maxNrOfDisturbances) {
-         this.maxNrOfDisturbances = maxNrOfDisturbances;
+      public AbstractDisturberBuilder errorsPerDisturbance(final int errorsPerDisturbance) {
+         this.errorsPerDisturbance = errorsPerDisturbance;
          return this;
       }
 
-      public AbstractDisturberBuilder maxPlanLength(final int maxLength) {
-         this.maxSteps = maxLength;
+      // public AbstractDisturberBuilder maxPlanLength(final int maxLength) {
+      // this.maxSteps = maxLength;
+      // return this;
+      // }
+
+      public AbstractDisturberBuilder maxNrOfDisturbances(final int maxNrOfDisturbances) {
+         this.maxNrOfDisturbances = maxNrOfDisturbances;
          return this;
       }
 
@@ -53,23 +70,59 @@ public abstract class AbstractDisturber {
    protected final ErrorType eType;
 
    protected final ErrorOccurence eOccurence;
-   protected final float eProbability;
    protected ModelRuntimeEnvironment mre;
    protected int nrOfObservedDisturbances;
    protected final int maxNrOfDisturbances;
    protected final Random rand;
+   protected final int errorsPerDisturbance;
 
    protected AbstractDisturber(final AbstractDisturberBuilder builder) {
       this.eType = builder.eType;
       this.eOccurence = builder.eOccurence;
-      this.eProbability = builder.eProbability;
       this.mre = builder.mre;
       this.maxNrOfDisturbances = builder.maxNrOfDisturbances;
       this.rand = new Random();
       this.nrOfObservedDisturbances = 0;
+      this.errorsPerDisturbance = builder.errorsPerDisturbance;
    }
 
-   protected abstract void disturb(final ITransformationVariable nextStep);
+   public StackModel addStack(final EGraph g) {
+      final StackModel sm = MomotUtil.getRoot(g, StackModel.class);
+
+      final EClassifier sClassifier = StackPackage.eINSTANCE.getEClassifier("Stack");
+
+      final Stack stack = (Stack) EcoreUtil.create((EClass) sClassifier);
+
+      stack.setId(String.format("Stack_%d", sm.getStacks().size() + 1));
+      stack.setLoad(0);
+      stack.setRight(sm.getStacks().get(0));
+      stack.setLeft(sm.getStacks().get(sm.getStacks().size() - 1));
+      sm.getStacks().get(sm.getStacks().size() - 1).setRight(stack);
+      sm.getStacks().get(0).setLeft(stack);
+
+      sm.getStacks().add(stack);
+      g.add(stack);
+
+      return sm;
+
+   }
+
+   protected void disturb(final ITransformationVariable nextStep) {
+      for(int i = 0; i < this.errorsPerDisturbance; i++) {
+
+         switch(eType) {
+            case WEAK_ERROR:
+
+               break;
+            case STRONG_ERROR:
+               removeStackToShiftFrom(mre.getGraph(), nextStep);
+               break;
+            case OPTIMALITY_ERROR:
+               addStack(mre.getGraph());
+               break;
+         }
+      }
+   }
 
    /**
     * Check for any occuring disturbance; Will occur based
@@ -81,32 +134,34 @@ public abstract class AbstractDisturber {
     *           .. Nr. of executions of current plan
     * @param nextExecution
     *           .. Next variable to execute, relevant for introducing specific error
-    * @return .. whether disturbance occured in terms of a change to runtime model
+    * @return .. null if no disturbance occured, otherwise disturbance object for information
     */
-   public boolean pollForDisturbance(final int curExecutionNr, final int plannedExecutions,
-         final ITransformationVariable nextExecution) {
+   public abstract Disturbance pollForDisturbance(final int curExecutionNr, final int plannedExecutions,
+         final ITransformationVariable nextExecution);
 
-      // Respect setting of max. number of disturbances for this instance (one disturber instance per run)
-      if(this.maxNrOfDisturbances > 0 && this.nrOfObservedDisturbances >= this.maxNrOfDisturbances) {
-         return false;
-      }
+   protected void removeStackToShiftFrom(final EGraph graph, final ITransformationVariable nextStep) {
+      final StackModel sm = MomotUtil.getRoot(graph, StackModel.class);
 
-      // Exclude disturbances in first or second half of execution plan according to setting
-      if(eOccurence == ErrorOccurence.FIRST_HALF && curExecutionNr > plannedExecutions / 2.0
-            || eOccurence == ErrorOccurence.SECOND_HALF && curExecutionNr < plannedExecutions / 2.0 + 1) {
-         return false;
-      }
+      // final String removeStackIdx = (String) nextStep.getResultParameterValue("fromId");
 
-      // Disturb by probability
-      if(rand.nextFloat() < eProbability) {
-         this.disturb(nextExecution);
-         nrOfObservedDisturbances++;
-         return true;
-      }
-      return false;
+      final Stack removeStack = sm.getStacks().stream().findAny().get();
+
+      final Stack r = removeStack.getRight();
+      final Stack l = removeStack.getLeft();
+      r.setLeft(l);
+      l.setRight(r);
+      // r.setRight(null);
+      // r.setLeft(null);
+
+      final EObject graphRemoveObj = graph.stream()
+            .filter(g -> g instanceof StackImpl && ((StackImpl) g).getId().compareTo(removeStack.getId()) == 0)
+            .findFirst().get();
+
+      sm.getStacks().remove(removeStack);
+      graph.remove(graphRemoveObj);
    }
 
-   public void reset() {
+   protected void reset() {
       this.mre = null;
       this.nrOfObservedDisturbances = 0;
    }
@@ -114,4 +169,5 @@ public abstract class AbstractDisturber {
    public void setModelRuntimeEnvironment(final ModelRuntimeEnvironment mre) {
       this.mre = mre;
    }
+
 }

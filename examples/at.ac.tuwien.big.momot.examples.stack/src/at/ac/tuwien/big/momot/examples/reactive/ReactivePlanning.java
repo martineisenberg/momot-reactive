@@ -12,7 +12,7 @@ import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.EvaluationReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
-import at.ac.tuwien.big.momot.reactive.result.ReactiveResult;
+import at.ac.tuwien.big.momot.reactive.result.ReactiveExperimentResult;
 import at.ac.tuwien.big.momot.search.fitness.IEGraphMultiDimensionalFitnessFunction;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
@@ -29,24 +29,22 @@ import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.emf.henshin.model.resource.HenshinResourceSet;
 
 public class ReactivePlanning {
-   final static boolean VERBOSE = true;
+   final static boolean VERBOSE = false;
 
    /* EXPERIMENT CONFIGURATION */
-   final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays.asList(new PlanningStrategy.PlanningStrategyBuilder(
-         "NSGAII",
-         new EvaluationReplanningStrategy.EvaluationReplanningStrategyBuilder("NSGAII").maxEvaluations(5000).build())
-               .maxEvaluations(5000).build());
+   final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays.asList(PlanningStrategy.create("NSGAII", 10000,
+         EvaluationReplanningStrategy.create("NSGAII", 1000).withPlanReuse().reusePortion(0.3f)));
    // PlanningStrategy.create("NSGAII", 5000, EvaluationReplanningStrategy.create("NSGAII", 5000, false)));
-   final static String INITIAL_MODEL = Paths.get("model", "model_five_stacks.xmi").toString();
+   final static String INITIAL_MODEL = Paths.get("model", "model_twentyfive_stacks_1_to_30.xmi").toString();
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
-   final static int MAX_SOLUTION_LENGTH = 10;
+   final static int MAX_SOLUTION_LENGTH = 100;
    final static int POPULATION_SIZE = 100;
-   private static final int EXPERIMENT_RUNS = 5;
+   private static final int EXPERIMENT_RUNS = 6;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
 
    /* DISTURBER CONFIGURATION */
    private static final ErrorType ERROR_TYPE = ErrorType.STRONG_ERROR;
-   private static final ErrorOccurence ERROR_OCCURENCE = ErrorOccurence.FIRST_HALF;
+   private static final ErrorOccurence ERROR_OCCURENCE = ErrorOccurence.LAST_10_PERCENT;
    private static final float ERROR_PROBABILITY = 0.8f;
    private static final int MAX_DISTURBANCES_PER_RUN = 1;
 
@@ -62,11 +60,11 @@ public class ReactivePlanning {
       final HenshinResourceSet hrs = new HenshinResourceSet();
       hrs.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
       final Resource initialModelRes = hrs.getResource(INITIAL_MODEL);
-      Map<String, ReactiveResult> results = new HashMap<>();
+      Map<String, ReactiveExperimentResult> results = new HashMap<>();
 
-      final AbstractDisturber disturber = new Disturber.DisturberBuilder().type(ERROR_TYPE).occurence(ERROR_OCCURENCE)
-            .probability(ERROR_PROBABILITY).maxPlanLength(MAX_SOLUTION_LENGTH)
-            .maxNrOfDisturbances(MAX_DISTURBANCES_PER_RUN).build();
+      final AbstractDisturber disturber = new ProbabilityDisturber.ProbabilityDisturberBuilder().type(ERROR_TYPE)
+            .occurence(ERROR_OCCURENCE).probability(ERROR_PROBABILITY).maxNrOfDisturbances(MAX_DISTURBANCES_PER_RUN)
+            .build();
 
       final Executor executor = new Executor(HENSHIN_MODULE);
 
@@ -80,7 +78,7 @@ public class ReactivePlanning {
 
       p.header1("RESULTS");
 
-      for(final Entry<String, ReactiveResult> e : results.entrySet()) {
+      for(final Entry<String, ReactiveExperimentResult> e : results.entrySet()) {
          p.subheader(e.getKey());
          p.property(String.format("Final model objectives (%s)", EVAL_OBJECTIVE),
                Arrays.toString(e.getValue().getFinalObjectives().toArray()));

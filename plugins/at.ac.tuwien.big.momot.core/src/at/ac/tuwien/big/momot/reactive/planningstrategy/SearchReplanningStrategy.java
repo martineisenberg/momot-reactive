@@ -1,6 +1,6 @@
 package at.ac.tuwien.big.momot.reactive.planningstrategy;
 
-import at.ac.tuwien.big.momot.problem.solution.TransformationSolution;
+import at.ac.tuwien.big.momot.problem.solution.variable.ITransformationVariable;
 import at.ac.tuwien.big.momot.reactive.IReactiveSearch;
 import at.ac.tuwien.big.momot.reactive.result.SearchResult;
 
@@ -14,9 +14,9 @@ public abstract class SearchReplanningStrategy extends ReplanningStrategy {
    protected boolean doReusePreviousPlan;
    protected float reusePortion;
 
-   protected SearchReplanningStrategy(final String replanningAlgorithm, final boolean reusePreviousPlan,
-         final float reusePortion) {
-      super(RepairStrategy.REPLAN_FOR_EVALUATIONS);
+   protected SearchReplanningStrategy(final RepairStrategy repairStrategy, final String replanningAlgorithm,
+         final boolean reusePreviousPlan, final float reusePortion) {
+      super(repairStrategy);
       this.replanningAlgorithm = replanningAlgorithm;
       this.doReusePreviousPlan = reusePreviousPlan;
       this.reusePortion = reusePortion;
@@ -35,5 +35,17 @@ public abstract class SearchReplanningStrategy extends ReplanningStrategy {
    }
 
    public abstract SearchResult replan(final IReactiveSearch search, final EGraph graph, final String algorithmName,
-         final int solutionLength, final int populationSize, final List<TransformationSolution> reinitSolutions);
+         final String experimentName, final int run, final int solutionLength, final int populationSize,
+         final List<ITransformationVariable> reinitSeed, final float reinitPortion, final double reinitBestObj,
+         final boolean recordBestObjective);
+
+   public SearchReplanningStrategy reusePortion(final float portion) {
+      this.reusePortion = portion;
+      return this;
+   }
+
+   public SearchReplanningStrategy withPlanReuse() {
+      this.doReusePreviousPlan = true;
+      return this;
+   }
 }

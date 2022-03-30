@@ -7,22 +7,24 @@ import at.ac.tuwien.big.momot.reactive.result.SearchResult;
 import java.util.List;
 
 import org.eclipse.emf.henshin.interpreter.EGraph;
+import org.moeaframework.core.TerminationCondition;
 
-public class EvaluationReplanningStrategy extends SearchReplanningStrategy {
+public class ConditionReplanningStrategy extends SearchReplanningStrategy {
 
-   public static EvaluationReplanningStrategy create(final String algorithm, final int nrOfEvaluations) {
-      return new EvaluationReplanningStrategy(algorithm, nrOfEvaluations);
+   public static ConditionReplanningStrategy create(final String algorithm,
+         final TerminationCondition terminationCondition) {
+      return new ConditionReplanningStrategy(algorithm, terminationCondition);
    }
 
-   private final int evaluations;
+   private final TerminationCondition terminationCondition;
 
-   private EvaluationReplanningStrategy(final String algorithm, final int nrOfEvaluations) {
-      super(RepairStrategy.REPLAN_FOR_EVALUATIONS, algorithm, false, 0.0f);
-      this.evaluations = nrOfEvaluations;
+   protected ConditionReplanningStrategy(final String algorithm, final TerminationCondition terminationCondition) {
+      super(RepairStrategy.REPLAN_FOR_CONDITION, algorithm, false, 0.0f);
+      this.terminationCondition = terminationCondition;
    }
 
-   public int getEvaluations() {
-      return evaluations;
+   public TerminationCondition getTerminationCondition() {
+      return this.terminationCondition;
    }
 
    @Override
@@ -31,13 +33,14 @@ public class EvaluationReplanningStrategy extends SearchReplanningStrategy {
          final List<ITransformationVariable> reinitSeed, final float reinitPortion, final double reinitBestObj,
          final boolean recordBestObjective) {
 
-      return search.performSearch(graph, algorithmName, experimentName, run, evaluations, null, solutionLength,
+      return search.performSearch(graph, algorithmName, experimentName, run, 0, terminationCondition, solutionLength,
             populationSize, reinitSeed, reinitBestObj, reinitPortion, recordBestObjective);
+
    }
 
    @Override
    public String toString() {
-      return "EvaluationReplanningStrategy-" + evaluations
+      return "ConditionReplanningStrategy-" + terminationCondition.toString()
             + (this.doReusePreviousPlan ? "reusePortion=" + reusePortion : "");
    }
 

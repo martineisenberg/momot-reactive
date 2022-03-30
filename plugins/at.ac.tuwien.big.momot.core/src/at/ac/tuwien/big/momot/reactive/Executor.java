@@ -16,10 +16,19 @@ public class Executor {
    private ModelRuntimeEnvironment mre = null;
    private final Engine engine;
 
+   private Executor(final Module module) {
+      this.module = module;
+      this.engine = new EngineImpl();
+   }
+
    public Executor(final String moduleUri) {
       final HenshinResourceSet hrs = new HenshinResourceSet();
       this.module = hrs.getModule(moduleUri);
       this.engine = new EngineImpl();
+   }
+
+   public Executor copy() {
+      return new Executor(this.module);
    }
 
    public boolean execute(final ITransformationVariable var) {
@@ -37,4 +46,5 @@ public class Executor {
    public void setModelRuntimeEnvironment(final ModelRuntimeEnvironment mre) {
       this.mre = mre;
    }
+
 }

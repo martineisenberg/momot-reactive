@@ -3,6 +3,7 @@ package at.ac.tuwien.big.momot.examples.stack;
 import at.ac.tuwien.big.moea.SearchExperiment;
 import at.ac.tuwien.big.moea.SearchResultManager;
 import at.ac.tuwien.big.moea.experiment.executor.SearchExecutor;
+import at.ac.tuwien.big.moea.experiment.executor.listener.CurrentBestObjectiveListener;
 import at.ac.tuwien.big.moea.experiment.executor.listener.SingleSeedPrintListener;
 import at.ac.tuwien.big.moea.print.ISolutionWriter;
 import at.ac.tuwien.big.moea.search.algorithm.EvolutionaryAlgorithmFactory;
@@ -19,12 +20,16 @@ import at.ac.tuwien.big.momot.reactive.IReactiveSearch;
 import at.ac.tuwien.big.momot.reactive.result.SearchResult;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationParameterMutation;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationPlaceholderMutation;
+import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationVariableMutation;
 import at.ac.tuwien.big.momot.search.algorithm.reinforcement.algorithm.RLUtils;
 import at.ac.tuwien.big.momot.search.algorithm.reinforcement.datastructures.SOQTable;
 import at.ac.tuwien.big.momot.search.algorithm.reinforcement.environment.EnvironmentBuilder;
 import at.ac.tuwien.big.momot.search.fitness.IEGraphMultiDimensionalFitnessFunction;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +40,8 @@ import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.henshin.interpreter.EGraph;
+import org.moeaframework.analysis.collector.Accumulator;
+import org.moeaframework.analysis.collector.ElapsedTimeCollector;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.TerminationCondition;
@@ -53,6 +60,9 @@ public class StackSearch implements IReactiveSearch {
    private static final int POPULATION_SIZE = 100;
 
    private static final int MAX_EVALUATIONS = 10000;
+
+   protected static final String PRINT_OBECJTIVE_DEV_DIRECTORY = "output/simulation/best_obj_recordings";
+   protected static final int RECORD_OBJECTIVE_INDEX = 0;
 
    private static Map<String, Integer> OBJECTIVE_INDICES;
    private static String OUT_PATH;
@@ -173,32 +183,44 @@ public class StackSearch implements IReactiveSearch {
    // }
 
    protected SearchExperiment<TransformationSolution> createExperiment(
-         final TransformationSearchOrchestration orchestration, final int evaluations,
-         final TerminationCondition terminationCondition) {
+         final TransformationSearchOrchestration orchestration, final String experimentName, final int runNr,
+         final int evaluations, final TerminationCondition terminationCondition, final double reseedBestObj,
+         final boolean recordBestObjective) {
       final SearchExperiment<TransformationSolution> experiment = new SearchExperiment<>(orchestration, evaluations,
             terminationCondition);
       experiment.setNumberOfRuns(NR_RUNS);
       experiment.addProgressListener(new SingleSeedPrintListener());
+      experiment.addCustomCollector(new ElapsedTimeCollector());
 
-      // if(PRINT_POPULATIONS) {
-      // final List<String> algoNames = new ArrayList<>();
-      // for(final IRegisteredAlgorithm<? extends Algorithm> a : orchestration.getAlgorithms()) {
-      // algoNames.add(orchestration.getAlgorithmName(a));
-      // }
-      //
-      // if(!Files.exists(Paths.get(PRINT_DIRECTORY))) {
-      // new File(PRINT_DIRECTORY).mkdirs();
-      // }
-      //
-      // experiment.addProgressListener(
-      // new CurrentNondominatedPopulationPrintListener(PRINT_DIRECTORY, algoNames, NR_RUNS, 100));
-      // }
+      if(recordBestObjective) {
+         if(!Files.exists(Paths.get(PRINT_OBECJTIVE_DEV_DIRECTORY))) {
+            new File(PRINT_OBECJTIVE_DEV_DIRECTORY).mkdirs();
+         }
 
+         experiment.addProgressListener(new CurrentBestObjectiveListener(PRINT_OBECJTIVE_DEV_DIRECTORY,
+               RECORD_OBJECTIVE_INDEX, experimentName, runNr, reseedBestObj, 100));
+      }
       return experiment;
+
    }
 
+   // if(PRINT_POPULATIONS) {
+   // final List<String> algoNames = new ArrayList<>();
+   // for(final IRegisteredAlgorithm<? extends Algorithm> a : orchestration.getAlgorithms()) {
+   // algoNames.add(orchestration.getAlgorithmName(a));
+   // }
+   //
+   // if(!Files.exists(Paths.get(PRINT_DIRECTORY))) {
+   // new File(PRINT_DIRECTORY).mkdirs();
+   // }
+   //
+   // experiment.addProgressListener(
+   // new CurrentNondominatedPopulationPrintListener(PRINT_DIRECTORY, algoNames, NR_RUNS, 100));
+   // }
+
    protected TransformationSearchOrchestration createOrchestration(final EGraph graph, final String algorithmName,
-         final int solutionLength, final int populationSize, final List<TransformationSolution> reinitSolutions) {
+         final int solutionLength, final int populationSize, final List<ITransformationVariable> reinitSeed,
+         final float reinitPortion) {
       StackPackage.eINSTANCE.eClass();
 
       final StackOrchestration orchestration = new StackOrchestration(graph, solutionLength);
@@ -206,8 +228,21 @@ public class StackSearch implements IReactiveSearch {
       final EvolutionaryAlgorithmFactory<TransformationSolution> moea = orchestration
             .createEvolutionaryAlgorithmFactory(populationSize);
 
-      if(reinitSolutions != null) {
-         moea.setInitialSolutions(reinitSolutions);
+      /** Reinit seed for evolutionary algorithms **/
+      if(reinitSeed != null && reinitPortion > 0 && algorithmName.compareTo("NSGAII") == 0) {
+         final int insertNrOfSolutions = (int) (populationSize * reinitPortion) > 0
+               ? (int) (populationSize * reinitPortion)
+               : 1;
+
+         final TransformationSolution[] solutionArr = new TransformationSolution[insertNrOfSolutions];
+
+         reinitSeed.addAll(Stream.generate(TransformationPlaceholderVariable::new)
+               .limit(solutionLength - reinitSeed.size()).collect(Collectors.toList()));
+
+         Arrays.fill(solutionArr, new TransformationSolution(MomotUtil.copy(graph), reinitSeed,
+               orchestration.getFitnessFunction().evaluatesNrObjectives()));
+
+         moea.setInitialSolutions(List.of(solutionArr));
       }
 
       final EnvironmentBuilder<TransformationSolution> envBuilder = new EnvironmentBuilder<>(
@@ -215,11 +250,17 @@ public class StackSearch implements IReactiveSearch {
       final Map<IEnvironment.Type, IEnvironment<TransformationSolution>> env = envBuilder
             .singleObjective("Standard Deviation").build();
 
+      /** Reinit seed for reinforcement algorithms (table) **/
+
       SOQTable<List<ApplicationState>, List<ApplicationState>> qTableInitialized = null;
 
-      if(reinitSolutions != null) {
+      if(reinitSeed != null
+            && (algorithmName.compareTo("QLearning") == 0 || algorithmName.compareTo("QLearningExplore") == 0)) {
+
          final TransformationSolution ts = TransformationSolution
-               .removePlaceholdersKeepUnitApplicationAssignment(reinitSolutions.get(0));
+               .removePlaceholdersKeepUnitApplicationAssignment(new TransformationSolution(MomotUtil.copy(graph),
+                     reinitSeed, orchestration.getFitnessFunction().evaluatesNrObjectives()));
+
          final IRLUtils<TransformationSolution> rlUtils = new RLUtils<>();
          qTableInitialized = new SOQTable<>();
 
@@ -242,8 +283,9 @@ public class StackSearch implements IReactiveSearch {
       if(algorithmName.compareTo("NSGAII") == 0) {
          orchestration.addAlgorithm(algorithmName,
                moea.createNSGAII(new TournamentSelection(2), new OnePointCrossover(1.0),
-                     new TransformationParameterMutation(0.1, orchestration.getModuleManager()),
-                     new TransformationPlaceholderMutation(0.2)));
+                     new TransformationParameterMutation(0.2, orchestration.getModuleManager()),
+                     new TransformationPlaceholderMutation(0.1),
+                     new TransformationVariableMutation(orchestration.getSearchHelper(), 0.1)));
       }
 
       if(algorithmName.compareTo("QLearning") == 0) {
@@ -253,7 +295,7 @@ public class StackSearch implements IReactiveSearch {
 
       if(algorithmName.compareTo("QLearningExplore") == 0) {
          orchestration.addAlgorithm(algorithmName,
-               rl.createSingleObjectiveExploreQLearner(10, 0.9, 0.2, false, 1e-3, 0.1, null, 0, 0, null, null, false));
+               rl.createSingleObjectiveExploreQLearner(10, 0.9, 0.1, false, 1e-3, 0.1, null, 0, 0, null, null, false));
       }
 
       return orchestration;
@@ -269,6 +311,14 @@ public class StackSearch implements IReactiveSearch {
 
          double minStd = Double.POSITIVE_INFINITY;
          TransformationSolution optimalTS = null;
+         final Accumulator acc = entry.getKey().getInstrumenter().getLastAccumulator();
+         double executionTime = 0;
+         int performedEvaluations = 0;
+         if(acc.keySet().contains("Elapsed Time")) {
+            executionTime = (double) acc.get("Elapsed Time", acc.size("Elapsed Time") - 1);
+            performedEvaluations = (int) acc.get("NFE", acc.size("NFE") - 1);
+         }
+
          final Population population = SearchResultManager.createApproximationSet(experiment, algorithmName);
          for(final TransformationSolution ts : MomotUtil.asIterables(population, TransformationSolution.class)) {
             final double curStd = ts
@@ -279,13 +329,10 @@ public class StackSearch implements IReactiveSearch {
                ts.execute();
             }
          }
-         // algorithmToBestRuleSequence.put(algName, optimalTS.getVariablesAsList());
          orchestration.getFitnessFunction().evaluate(optimalTS);
-         // StackSearch.saveSolution(Paths.get(dir, algorithmName + "_plan_" + solutionFilename + ".txt").toString(),
-         // optimalTS, SOLUTION_WRITER);
-         // StackSearch.saveModel(Paths.get(dir, algorithmName + "_model_" + modelFilename + ".xmi").toString(),
-         // optimalTS);
-         return new SearchResult(population, optimalTS, optimalTS.getVariablesAsList());
+
+         return new SearchResult(population, optimalTS, optimalTS.getVariablesAsList(), executionTime,
+               performedEvaluations);
 
       }
       return null;
@@ -298,6 +345,25 @@ public class StackSearch implements IReactiveSearch {
       } else {
          baseName = root.eResource().getURI().trimFileExtension().lastSegment();
       }
+   }
+
+   private List<TransformationSolution> getBestSolutionNTimes(final EGraph g,
+         final IEGraphMultiDimensionalFitnessFunction fitnessFunction, final int n,
+         final List<ITransformationVariable> trafoVars, final int fillWithPlaceholdersUntil) {
+      final List<TransformationSolution> solutions = new ArrayList<>();
+      final TransformationSolution[] solutionArr = new TransformationSolution[n];
+
+      trafoVars.addAll(Stream.generate(TransformationPlaceholderVariable::new)
+            .limit(fillWithPlaceholdersUntil - trafoVars.size()).collect(Collectors.toList()));
+
+      // solutions.add(new TransformationSolution(MomotUtil.copy(g), curVars,
+      // utils.getFitnessFunction().evaluatesNrObjectives()));
+
+      Arrays.fill(solutionArr,
+            new TransformationSolution(MomotUtil.copy(g), trafoVars, fitnessFunction.evaluatesNrObjectives()));
+
+      return List.of(solutionArr);
+
    }
 
    // public List<ITransformationVariable> performInitialSearch(final String initialGraph, final int solutionLength,
@@ -331,36 +397,27 @@ public class StackSearch implements IReactiveSearch {
    // "replan_" + runName, "after_replan_" + runName);
    // }
 
-   private List<TransformationSolution> getBestSolutionNTimes(final EGraph g,
-         final IEGraphMultiDimensionalFitnessFunction fitnessFunction, final int n,
-         final List<ITransformationVariable> trafoVars, final int fillWithPlaceholdersUntil) {
-      final List<TransformationSolution> solutions = new ArrayList<>();
-      final TransformationSolution[] solutionArr = new TransformationSolution[n];
-
-      trafoVars.addAll(Stream.generate(TransformationPlaceholderVariable::new)
-            .limit(fillWithPlaceholdersUntil - trafoVars.size()).collect(Collectors.toList()));
-
-      // solutions.add(new TransformationSolution(MomotUtil.copy(g), curVars,
-      // utils.getFitnessFunction().evaluatesNrObjectives()));
-
-      Arrays.fill(solutionArr,
-            new TransformationSolution(MomotUtil.copy(g), trafoVars, fitnessFunction.evaluatesNrObjectives()));
-
-      return List.of(solutionArr);
-
-   }
-
    @Override
-   public SearchResult performSearch(final EGraph graph, final String algorithmName, final int evaluations,
-         final TerminationCondition condition, final int solutionLength, final int populationSize,
-         final List<TransformationSolution> reinitSolutions) {
+   public SearchResult performSearch(final EGraph graph, final String algorithmName, final String experimentName,
+         final int run, final int evaluations, final TerminationCondition condition, final int solutionLength,
+         final int populationSize, final List<ITransformationVariable> reinitSeed, final double reinitBestObj,
+         final float reinitPortion, final boolean recordBestObjective) {
       final TransformationSearchOrchestration orchestration = createOrchestration(graph, algorithmName, solutionLength,
-            populationSize, reinitSolutions);
+            populationSize, reinitSeed, reinitPortion);
 
       deriveBaseName(orchestration);
+
+      // double reinitBestObj = 0;
+      // if(reinitSeed != null) {
+      // final TransformationSolution ts = new TransformationSolution(MomotUtil.copy(graph), reinitSeed,
+      // orchestration.getFitnessFunction().evaluatesNrObjectives());
+      // orchestration.getFitnessFunction().evaluate(ts);
+      // reinitBestObj = ts.getObjective(0);
+      // }
+
       // printSearchInfo(orchestration);
-      final SearchExperiment<TransformationSolution> experiment = createExperiment(orchestration, evaluations,
-            condition);
+      final SearchExperiment<TransformationSolution> experiment = createExperiment(orchestration, experimentName, run,
+            evaluations, condition, reinitBestObj, recordBestObjective);
       experiment.run();
 
       SOLUTION_WRITER = experiment.getSearchOrchestration().createSolutionWriter();

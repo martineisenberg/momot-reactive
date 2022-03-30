@@ -11,7 +11,7 @@ import at.ac.tuwien.big.momot.reactive.error.ErrorType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.EvaluationReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.NaivePlanningStrategy;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
-import at.ac.tuwien.big.momot.reactive.result.ReactiveResult;
+import at.ac.tuwien.big.momot.reactive.result.ReactiveExperimentResult;
 import at.ac.tuwien.big.momot.search.fitness.IEGraphMultiDimensionalFitnessFunction;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
@@ -63,7 +63,7 @@ public class ReactivePlanning {
       final HenshinResourceSet hrs = new HenshinResourceSet();
       hrs.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
       final Resource initialModelRes = hrs.getResource(INITIAL_MODEL);
-      Map<String, ReactiveResult> results = new HashMap<>();
+      Map<String, ReactiveExperimentResult> results = new HashMap<>();
 
       final AbstractDisturber disturber = new Disturber.DisturberBuilder().type(ERROR_TYPE).occurence(ERROR_OCCURENCE)
             .probability(ERROR_PROBABILITY).maxPlanLength(MAX_SOLUTION_LENGTH)
@@ -83,7 +83,7 @@ public class ReactivePlanning {
 
       p.header1("RESULTS");
 
-      for(final Entry<String, ReactiveResult> e : results.entrySet()) {
+      for(final Entry<String, ReactiveExperimentResult> e : results.entrySet()) {
          p.subheader(e.getKey());
          p.property(String.format("Final model objectives (%s)", EVAL_OBJECTIVE),
                Arrays.toString(e.getValue().getFinalObjectives().toArray()));

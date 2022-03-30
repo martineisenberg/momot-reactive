@@ -19,12 +19,13 @@ public class Printer {
 
    }
 
-   public Printer(final String outPath) {
+   public Printer(final String outPath, final ISolutionWriter sw) {
       try {
          this.ps = new PrintStream(outPath);
       } catch(final FileNotFoundException e) {
          e.printStackTrace();
       }
+      this.sw = sw;
    }
 
    public void close() {
