@@ -61,13 +61,13 @@ public class ReactiveExperiment {
 
    }
 
-   private float calculateObjectiveOnFinalModel(final IEGraphMultiDimensionalFitnessFunction f,
-         final String objectiveName, final EGraph g, final List<ITransformationVariable> executedVars) {
+   private double calculateObjectiveOnModel(final IEGraphMultiDimensionalFitnessFunction f, final String objectiveName,
+         final EGraph g, final List<ITransformationVariable> executedVars) {
 
       final TransformationSolution ts = new TransformationSolution(MomotUtil.copy(g), executedVars,
             f.evaluatesNrObjectives());
       f.evaluate(ts);
-      return (float) ts.getObjective(f.getObjectiveIndex(objectiveName));
+      return ts.getObjective(f.getObjectiveIndex(objectiveName));
 
    }
 
@@ -81,9 +81,13 @@ public class ReactiveExperiment {
       return name;
    }
 
+   private double getObjectiveFromTS(final TransformationSolution ts, final String objectiveName) {
+      return ts.getObjective(utils.getFitnessFunction().getObjectiveIndex(objectiveName));
+   }
+
    private PredictiveRunResult predictiveReplanning(final EGraph runtimeGraph, final String expName, final int run,
          final PredictivePlanningStrategy pps, final List<ITransformationVariable> curPlan, final int curPlanPos,
-         final float curBestObj) {
+         final double curBestObj) {
       final Executor simExecutor = executor.copy();
       final ModelRuntimeEnvironment simMre = new ModelRuntimeEnvironment(runtimeGraph);
       simExecutor.setModelRuntimeEnvironment(simMre);
@@ -134,7 +138,8 @@ public class ReactiveExperiment {
                   srStrategy.isDoReusePreviousPlan() ? curPlan.subList(curPlanPos, curPlan.size()) : null,
                   srStrategy.getReusePortion(), curBestObj, true);
 
-            runResult.addPlanningStats(res.getExecutionTime(), res.getExecutionEvaluations());
+            runResult.addPlanningStats(res.getExecutionTime(), res.getExecutionEvaluations(),
+                  getObjectiveFromTS(res.getOptimalSolution(), evalObjectiveName));
             p.subheader("New plan", verbose).plan(res.getOptimalSolution(), verbose);
             return res.getOptimalPlan();
 
@@ -145,7 +150,8 @@ public class ReactiveExperiment {
                   srStrategy.isDoReusePreviousPlan() ? curPlan.subList(curPlanPos, curPlan.size()) : null,
                   srStrategy.getReusePortion(), curBestObj, true);
 
-            runResult.addPlanningStats(res.getExecutionTime(), res.getExecutionEvaluations());
+            runResult.addPlanningStats(res.getExecutionTime(), res.getExecutionEvaluations(),
+                  getObjectiveFromTS(res.getOptimalSolution(), evalObjectiveName));
             p.subheader("New plan", verbose).plan(res.getOptimalSolution(), verbose);
             return res.getOptimalPlan();
          case NAIVE:
@@ -172,7 +178,8 @@ public class ReactiveExperiment {
       final SearchResult res = searchInstance.performSearch(runtimeGraph, ps.getInitialSearchAlgorithm(), expName, run,
             ps.getInitialSearchEvaluations(), ps.getTerminationCriterion(), solutionLength, populationSize, null, 0,
             0.0f, false);
-      runResult.addPlanningStats(res.getExecutionTime(), res.getExecutionEvaluations());
+      runResult.addPlanningStats(res.getExecutionTime(), res.getExecutionEvaluations(),
+            getObjectiveFromTS(res.getOptimalSolution(), evalObjectiveName));
 
       p.plan(res.getOptimalSolution(), verbose);
 
@@ -205,16 +212,19 @@ public class ReactiveExperiment {
                      .str(this.utils.getReprFromEGraph(mre.getGraph()), verbose)
                      .header2(String.format("Using planning strategy (%s)...", ps.getReplanningStrategy()), verbose);
                runResult.addDisturbance(d);
+
+               runResult.addPostDisturbanceObjective(calculateObjectiveOnModel(utils.getFitnessFunction(),
+                     evalObjectiveName, mre.getGraph(), new ArrayList<>()));
                // change occured, use repairstrategy
 
                curPlan = replanning(MomotUtil.copy(runtimeGraph), expName, run, curPlan, it.nextIndex(),
-                     ps.getReplanningStrategy(), runResult, calculateObjectiveOnFinalModel(utils.getFitnessFunction(),
+                     ps.getReplanningStrategy(), runResult, calculateObjectiveOnModel(utils.getFitnessFunction(),
                            evalObjectiveName, graphOfLastPlanning, new ArrayList<>(mre.getExecutedUnits())));
 
                if(ps.getReplanningStrategy() instanceof PredictivePlanningStrategy) {
                   final PredictivePlanningStrategy pps = (PredictivePlanningStrategy) ps.getReplanningStrategy();
                   final PredictiveRunResult prr = predictiveReplanning(MomotUtil.copy(runtimeGraph), expName, run, pps,
-                        curPlan, it.nextIndex(), calculateObjectiveOnFinalModel(utils.getFitnessFunction(),
+                        curPlan, it.nextIndex(), calculateObjectiveOnModel(utils.getFitnessFunction(),
                               evalObjectiveName, graphOfLastPlanning, new ArrayList<>(mre.getExecutedUnits())));
                   runResult.addPredictiveRunResult(prr);
                   // execute simulated runs, get plans, evaluate and return results
@@ -237,7 +247,7 @@ public class ReactiveExperiment {
       p.header2("Final model", verbose).str(utils.getReprFromEGraph(mre.getGraph()), verbose);
 
       runResult.setFailedExecutions(failedExecutions);
-      runResult.setFinalObjective(calculateObjectiveOnFinalModel(utils.getFitnessFunction(), evalObjectiveName,
+      runResult.setFinalObjective(calculateObjectiveOnModel(utils.getFitnessFunction(), evalObjectiveName,
             graphOfLastPlanning, mre.getExecutedUnits()));
       return runResult;
    }

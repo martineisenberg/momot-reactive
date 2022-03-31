@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReactiveRunResult {
-   private float finalObjective;
+   private double finalObjective;
+   private final List<Double> postDisturbanceObjectives;
+   private final List<Double> plannedObjectives;
+
    private final List<Double> runtimes;
    private final List<Number> evaluations;
    private final List<Disturbance> disturbances;
@@ -14,6 +17,9 @@ public class ReactiveRunResult {
    private int failedExecutions;
 
    public ReactiveRunResult() {
+      this.postDisturbanceObjectives = new ArrayList<>();
+      this.plannedObjectives = new ArrayList<>();
+
       this.runtimes = new ArrayList<>();
       this.evaluations = new ArrayList<>();
       this.disturbances = new ArrayList<>();
@@ -25,9 +31,15 @@ public class ReactiveRunResult {
       this.disturbances.add(d);
    }
 
-   public void addPlanningStats(final double runtime, final double evaluations) {
+   public void addPlanningStats(final double runtime, final double evaluations, final double objective) {
       this.runtimes.add(runtime);
       this.evaluations.add(evaluations);
+      this.plannedObjectives.add(objective);
+   }
+
+   public void addPostDisturbanceObjective(final double objectiveValue) {
+      this.postDisturbanceObjectives.add(objectiveValue);
+
    }
 
    public void addPredictiveRunResult(final PredictiveRunResult prr) {
@@ -46,8 +58,16 @@ public class ReactiveRunResult {
       return this.failedExecutions;
    }
 
-   public float getFinalObjective() {
+   public double getFinalObjective() {
       return this.finalObjective;
+   }
+
+   public List<Double> getPlannedObjectives() {
+      return this.plannedObjectives;
+   }
+
+   public List<Double> getPostDisturbanceObjectives() {
+      return this.postDisturbanceObjectives;
    }
 
    public List<Double> getRuntimes() {
@@ -58,7 +78,7 @@ public class ReactiveRunResult {
       this.failedExecutions = failedExecutions;
    }
 
-   public void setFinalObjective(final float finalObjective) {
+   public void setFinalObjective(final double finalObjective) {
       this.finalObjective = finalObjective;
    }
 

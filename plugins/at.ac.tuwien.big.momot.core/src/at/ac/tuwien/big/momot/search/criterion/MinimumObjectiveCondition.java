@@ -28,8 +28,9 @@ public class MinimumObjectiveCondition implements TerminationCondition {
 
    private boolean satisfiesCriteria(final Solution s) {
       final double[] o = s.getObjectives();
-      for(int i = 0; i < o.length; i++) {
-         if(o[i] >= objectiveThresholds.get(i)) {
+      for(final Entry<Integer, Double> e : objectiveThresholds.entrySet()) {
+
+         if(o[e.getKey()] >= e.getValue()) {
             return false;
          }
       }

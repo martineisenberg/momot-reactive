@@ -11,10 +11,10 @@ import at.ac.tuwien.big.momot.reactive.Printer;
 import at.ac.tuwien.big.momot.reactive.ReactiveExperiment;
 import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.EvaluationReplanningStrategy;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.NaivePlanningStrategy;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.ConditionReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
 import at.ac.tuwien.big.momot.reactive.result.ReactiveExperimentResult;
+import at.ac.tuwien.big.momot.search.criterion.MinimumObjectiveCondition;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
 import com.google.common.collect.ImmutableList;
@@ -41,18 +41,21 @@ import org.eclipse.emf.henshin.model.resource.HenshinResourceSet;
 
 public class ReactivePlanningSuite {
 
-   final static double OBJ_THRESHOLD = 2.5;
+   final static double OBJ_THRESHOLD = 22;
    final static int OBJ_INDEX = 0; // standard deviation for stack problem
+
+   final static Map<Integer, Double> objectiveThresholds = Map.of(OBJ_INDEX, OBJ_THRESHOLD);
 
    /* EXPERIMENT CONFIGURATION */
 
    // ----------- Planning Cases ------------ //
    final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays.asList(
-
-         PlanningStrategy.create("NSGAII", 10000,
-               EvaluationReplanningStrategy.create("NSGAII", 10000).withPlanReuse().reusePortion(0.2f)),
-         PlanningStrategy.create("NSGAII", 10000, EvaluationReplanningStrategy.create("NSGAII", 10000)),
-         PlanningStrategy.create("NSGAII", 10000, NaivePlanningStrategy.get()));
+         PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
+               ConditionReplanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds))
+                     .withPlanReuse().reusePortion(0.2f)),
+         PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
+               ConditionReplanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds))));
+   // PlanningStrategy.create("NSGAII", 10000, NaivePlanningStrategy.get();
 
    // ----------- Model, Algorithm ------------ //
    final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std50_2500_27.359.xmi").toString();
@@ -60,20 +63,19 @@ public class ReactivePlanningSuite {
    final static int MAX_SOLUTION_LENGTH = 150;
    final static int POPULATION_SIZE = 100;
    private static final int EXPERIMENT_RUNS = 30;
-   private static final int MAX_DISTURBANCES_PER_RUN = 1;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
 
    /* DISTURBER CONFIGURATION */
-   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.OPTIMALITY_ERROR);
+   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.OPTIMALITY_ERROR,
+         ErrorType.STRONG_ERROR);
    private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT,
          ErrorOccurence.MIDDLE_10_PERCENT, ErrorOccurence.LAST_10_PERCENT);
    final static int ERRORS_PER_DISTURBANCE = 5;
-   // private static final List<Float> ERROR_PROBABILITY_LIST = ImmutableList.of(0.1f);
 
    /* OUTPUTS */
    final static boolean VERBOSE = false;
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
-   final static String PRINT_FILENAME = "test_1to100_evaluationreplanning_optimality_err";
+   final static String PRINT_FILENAME = "50stacks_1to100_model_threshold_planning";
    final static Printer PS_OUT = new Printer(Paths.get(PRINT_DIR, PRINT_FILENAME + ".txt").toString(),
          new StackSolutionWriter(new StackUtils().getFitnessFunction()));
    final static boolean PRINT_RESULTS_TO_CSV = true;
@@ -115,8 +117,7 @@ public class ReactivePlanningSuite {
          final ErrorType eType = (ErrorType) o.get(0);
          final ErrorOccurence eOccurence = (ErrorOccurence) o.get(1);
          final AbstractDisturber disturber = new RangeDisturber.RangeDisturberBuilder().type(eType)
-               .occurence(eOccurence).maxNrOfDisturbances(MAX_DISTURBANCES_PER_RUN)
-               .errorsPerDisturbance(ERRORS_PER_DISTURBANCE).build();
+               .occurence(eOccurence).maxNrOfDisturbances(1).errorsPerDisturbance(ERRORS_PER_DISTURBANCE).build();
 
          final Executor executor = new Executor(HENSHIN_MODULE);
 
@@ -159,9 +160,10 @@ public class ReactivePlanningSuite {
 
          p.property("Disturbances (atIteration, type, plannedIterations): ", e.getValue().getDisturbances().toString());
 
-         p.property(String.format("Avg. final objective (%s)", EVAL_OBJECTIVE), Double.toString(Arrays
-               .stream(e.getValue().getFinalObjectives().stream().mapToDouble(f -> f != null ? f : Float.NaN).toArray())
-               .average().getAsDouble()));
+         p.property(String.format("Avg. final objective (%s)", EVAL_OBJECTIVE),
+               Double.toString(Arrays.stream(
+                     e.getValue().getFinalObjectives().stream().mapToDouble(f -> f != null ? f : Double.NaN).toArray())
+                     .average().getAsDouble()));
 
          p.property("Avg. runtime for replanning",
                String.valueOf(getAverageOverLastElementsOfSubLists(e.getValue().getRuntimes())));
@@ -174,8 +176,9 @@ public class ReactivePlanningSuite {
 
    private static void printExperimentResultsToCSV(final String path, final Map<String, ReactiveExperimentResult> r) {
       final List<String> header = new ArrayList<>(Arrays.asList("variant", "run", "initial_planning_time",
-            "initial_planning_evaluations", "last_replanning_time", "last_replanning_evaluations",
-            "overall_replanning_time", "overall_replanning_evaluations", "final_objective_value", "failed_executions"));
+            "initial_planning_evaluations", "initial_planning_objective", "initial_post_disturbance_std",
+            "last_replanning_time", "last_replanning_evaluations", "overall_replanning_time",
+            "overall_replanning_evaluations", "final_objective_value", "failed_executions"));
 
       final List<String> headerDist = new ArrayList<>(
             Arrays.asList("variant", "run", "at_iteration", "planned_iterations", "disturbance_type"));
@@ -190,11 +193,16 @@ public class ReactivePlanningSuite {
          final List<Double> lastReplanningEvaluations = new ArrayList<>();
          final List<Double> overallReplanningEvaluations = new ArrayList<>();
          final List<Double> overallReplanningTimes = new ArrayList<>();
+         final List<Double> initialPlanningObjective = new ArrayList<>();
+         final List<Double> initialPostDisturbanceObjective = new ArrayList<>();
 
          e.getValue().getRuntimes().forEach(f -> initialPlanningTimes.add(f.get(0)));
          e.getValue().getEvaluations().forEach(f -> initialPlanningEvaluations.add((Double) f.get(0)));
          e.getValue().getRuntimes().forEach(f -> lastReplanningTimes.add(f.get(f.size() - 1)));
          e.getValue().getEvaluations().forEach(f -> lastReplanningEvaluations.add((Double) f.get(f.size() - 1)));
+         e.getValue().getPostDisturbanceObjectives().forEach(f -> initialPostDisturbanceObjective.add(f.get(0)));
+         e.getValue().getPlannedObjectives().forEach(f -> initialPlanningObjective.add(f.get(0)));
+
          e.getValue().getRuntimes()
                .forEach(f -> overallReplanningTimes.add(f.stream().mapToDouble(g -> (double) g).sum()));
          e.getValue().getEvaluations()
@@ -215,7 +223,8 @@ public class ReactivePlanningSuite {
 
          IntStream.range(0, lastReplanningTimes.size()).forEach(i -> {
             appendValues.add(new String[] { initialPlanningTimes.get(i).toString(),
-                  initialPlanningEvaluations.get(i).toString(), lastReplanningTimes.get(i).toString(),
+                  initialPlanningEvaluations.get(i).toString(), initialPlanningObjective.get(i).toString(),
+                  initialPostDisturbanceObjective.get(i).toString(), lastReplanningTimes.get(i).toString(),
                   lastReplanningEvaluations.get(i).toString(), overallReplanningTimes.get(i).toString(),
                   overallReplanningEvaluations.get(i).toString(), e.getValue().getFinalObjectives().get(i).toString(),
                   e.getValue().getFinalFailedExecutions().get(i).toString() });

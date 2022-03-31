@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReactiveExperimentResult {
-   private final List<Float> finalObjectives;
+   private final List<Double> finalObjectives;
+   private final List<List<Double>> postDisturbanceObjectives;
+   private final List<List<Double>> plannedObjectives;
+
    private final List<List<Double>> runtimes;
    private final List<List<Number>> evaluations;
    private final List<List<Disturbance>> disturbances;
@@ -15,6 +18,9 @@ public class ReactiveExperimentResult {
    public ReactiveExperimentResult() {
       this.finalObjectives = new ArrayList<>();
       this.runtimes = new ArrayList<>();
+      this.postDisturbanceObjectives = new ArrayList<>();
+      this.plannedObjectives = new ArrayList<>();
+
       this.evaluations = new ArrayList<>();
       this.disturbances = new ArrayList<>();
       this.finalFailedExecutions = new ArrayList<>();
@@ -23,6 +29,8 @@ public class ReactiveExperimentResult {
    public void addRunResult(final ReactiveRunResult reactiveRunRes) {
       this.runtimes.add(reactiveRunRes.getRuntimes());
       this.evaluations.add(reactiveRunRes.getEvaluations());
+      this.postDisturbanceObjectives.add(reactiveRunRes.getPostDisturbanceObjectives());
+      this.plannedObjectives.add(reactiveRunRes.getPlannedObjectives());
       this.disturbances.add(reactiveRunRes.getDisturbances());
       this.finalObjectives.add(reactiveRunRes.getFinalObjective());
       this.finalFailedExecutions.add(reactiveRunRes.getFailedExecutions());
@@ -40,8 +48,16 @@ public class ReactiveExperimentResult {
       return this.finalFailedExecutions;
    }
 
-   public List<Float> getFinalObjectives() {
+   public List<Double> getFinalObjectives() {
       return this.finalObjectives;
+   }
+
+   public List<List<Double>> getPlannedObjectives() {
+      return this.plannedObjectives;
+   }
+
+   public List<List<Double>> getPostDisturbanceObjectives() {
+      return this.postDisturbanceObjectives;
    }
 
    public List<List<Double>> getRuntimes() {
