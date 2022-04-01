@@ -16,10 +16,10 @@ public class ConditionReplanningStrategy extends SearchReplanningStrategy {
       return new ConditionReplanningStrategy(algorithm, terminationCondition);
    }
 
-   private final TerminationCondition terminationCondition;
+   private TerminationCondition terminationCondition;
 
    protected ConditionReplanningStrategy(final String algorithm, final TerminationCondition terminationCondition) {
-      super(RepairStrategy.REPLAN_FOR_CONDITION, algorithm, false, 0.0f);
+      super(RepairStrategy.REPLAN_FOR_CONDITION, algorithm);
       this.terminationCondition = terminationCondition;
    }
 
@@ -30,7 +30,7 @@ public class ConditionReplanningStrategy extends SearchReplanningStrategy {
    @Override
    public SearchResult replan(final IReactiveSearch search, final EGraph graph, final String algorithmName,
          final String experimentName, final int run, final int solutionLength, final int populationSize,
-         final List<ITransformationVariable> reinitSeed, final float reinitPortion, final double reinitBestObj,
+         final List<ITransformationVariable> reinitSeed, final double reinitPortion, final double reinitBestObj,
          final boolean recordBestObjective) {
 
       return search.performSearch(graph, algorithmName, experimentName, run, 0, terminationCondition, solutionLength,
@@ -38,10 +38,14 @@ public class ConditionReplanningStrategy extends SearchReplanningStrategy {
 
    }
 
+   public void setTerminationCondition(final TerminationCondition condition) {
+      this.terminationCondition = condition;
+   }
+
    @Override
    public String toString() {
       return "ConditionReplanningStrategy-" + terminationCondition.toString()
-            + (this.doReusePreviousPlan ? "reusePortion=" + reusePortion : "");
+            + (this.reusePortion > 0 ? "reusePortion=" + reusePortion : "");
    }
 
 }

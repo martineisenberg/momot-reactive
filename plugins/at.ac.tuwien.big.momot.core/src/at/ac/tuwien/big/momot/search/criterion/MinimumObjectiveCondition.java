@@ -20,13 +20,22 @@ public class MinimumObjectiveCondition implements TerminationCondition {
       this.objectiveThresholds = objectiveThresholds;
    }
 
+   public double[] getObjectiveThresholds() {
+      final double[] v = new double[objectiveThresholds.values().size()];
+      int i = 0;
+      for(final double n : objectiveThresholds.values()) {
+         v[i++] = n;
+      }
+      return v;
+   }
+
    @Override
    public void initialize(final Algorithm algorithm) {
       // No initialization required; Early stopping only if objective threshold reached
 
    }
 
-   private boolean satisfiesCriteria(final Solution s) {
+   public boolean satisfiesCriteria(final Solution s) {
       final double[] o = s.getObjectives();
       for(final Entry<Integer, Double> e : objectiveThresholds.entrySet()) {
 

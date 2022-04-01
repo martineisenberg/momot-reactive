@@ -70,6 +70,10 @@ public class ReactiveRunResult {
       return this.postDisturbanceObjectives;
    }
 
+   public List<PredictiveRunResult> getPredictiveRunResults() {
+      return this.predictiveRunResults;
+   }
+
    public List<Double> getRuntimes() {
       return this.runtimes;
    }

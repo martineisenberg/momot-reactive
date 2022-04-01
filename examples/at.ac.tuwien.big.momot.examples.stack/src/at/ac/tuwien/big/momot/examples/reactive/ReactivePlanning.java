@@ -33,7 +33,7 @@ public class ReactivePlanning {
 
    /* EXPERIMENT CONFIGURATION */
    final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays.asList(PlanningStrategy.create("NSGAII", 10000,
-         EvaluationReplanningStrategy.create("NSGAII", 1000).withPlanReuse().reusePortion(0.3f)));
+         EvaluationReplanningStrategy.create("NSGAII", 1000).withPlanReuse(0.2)));
    // PlanningStrategy.create("NSGAII", 5000, EvaluationReplanningStrategy.create("NSGAII", 5000, false)));
    final static String INITIAL_MODEL = Paths.get("model", "model_twentyfive_stacks_1_to_30.xmi").toString();
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();

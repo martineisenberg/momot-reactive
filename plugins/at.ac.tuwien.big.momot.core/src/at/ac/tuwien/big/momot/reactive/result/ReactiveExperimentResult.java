@@ -7,6 +7,7 @@ import java.util.List;
 
 public class ReactiveExperimentResult {
    private final List<Double> finalObjectives;
+   private final List<List<PredictiveRunResult>> predictiveRunResults;
    private final List<List<Double>> postDisturbanceObjectives;
    private final List<List<Double>> plannedObjectives;
 
@@ -20,13 +21,14 @@ public class ReactiveExperimentResult {
       this.runtimes = new ArrayList<>();
       this.postDisturbanceObjectives = new ArrayList<>();
       this.plannedObjectives = new ArrayList<>();
-
+      this.predictiveRunResults = new ArrayList<>();
       this.evaluations = new ArrayList<>();
       this.disturbances = new ArrayList<>();
       this.finalFailedExecutions = new ArrayList<>();
    }
 
    public void addRunResult(final ReactiveRunResult reactiveRunRes) {
+      this.predictiveRunResults.add(reactiveRunRes.getPredictiveRunResults());
       this.runtimes.add(reactiveRunRes.getRuntimes());
       this.evaluations.add(reactiveRunRes.getEvaluations());
       this.postDisturbanceObjectives.add(reactiveRunRes.getPostDisturbanceObjectives());
@@ -58,6 +60,10 @@ public class ReactiveExperimentResult {
 
    public List<List<Double>> getPostDisturbanceObjectives() {
       return this.postDisturbanceObjectives;
+   }
+
+   public List<List<PredictiveRunResult>> getPredictiveRunResults() {
+      return this.predictiveRunResults;
    }
 
    public List<List<Double>> getRuntimes() {

@@ -220,7 +220,7 @@ public class StackSearch implements IReactiveSearch {
 
    protected TransformationSearchOrchestration createOrchestration(final EGraph graph, final String algorithmName,
          final int solutionLength, final int populationSize, final List<ITransformationVariable> reinitSeed,
-         final float reinitPortion) {
+         final double reinitPortion) {
       StackPackage.eINSTANCE.eClass();
 
       final StackOrchestration orchestration = new StackOrchestration(graph, solutionLength);
@@ -401,7 +401,7 @@ public class StackSearch implements IReactiveSearch {
    public SearchResult performSearch(final EGraph graph, final String algorithmName, final String experimentName,
          final int run, final int evaluations, final TerminationCondition condition, final int solutionLength,
          final int populationSize, final List<ITransformationVariable> reinitSeed, final double reinitBestObj,
-         final float reinitPortion, final boolean recordBestObjective) {
+         final double reinitPortion, final boolean recordBestObjective) {
       final TransformationSearchOrchestration orchestration = createOrchestration(graph, algorithmName, solutionLength,
             populationSize, reinitSeed, reinitPortion);
 

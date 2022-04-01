@@ -38,4 +38,8 @@ public class SearchResult {
    public TransformationSolution getOptimalSolution() {
       return this.optimalSolution;
    }
+
+   public Population getPopulation() {
+      return this.solutions;
+   }
 }

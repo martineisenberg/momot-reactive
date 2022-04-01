@@ -17,7 +17,7 @@ public class EvaluationReplanningStrategy extends SearchReplanningStrategy {
    private final int evaluations;
 
    private EvaluationReplanningStrategy(final String algorithm, final int nrOfEvaluations) {
-      super(RepairStrategy.REPLAN_FOR_EVALUATIONS, algorithm, false, 0.0f);
+      super(RepairStrategy.REPLAN_FOR_EVALUATIONS, algorithm);
       this.evaluations = nrOfEvaluations;
    }
 
@@ -28,7 +28,7 @@ public class EvaluationReplanningStrategy extends SearchReplanningStrategy {
    @Override
    public SearchResult replan(final IReactiveSearch search, final EGraph graph, final String algorithmName,
          final String experimentName, final int run, final int solutionLength, final int populationSize,
-         final List<ITransformationVariable> reinitSeed, final float reinitPortion, final double reinitBestObj,
+         final List<ITransformationVariable> reinitSeed, final double reinitPortion, final double reinitBestObj,
          final boolean recordBestObjective) {
 
       return search.performSearch(graph, algorithmName, experimentName, run, evaluations, null, solutionLength,
@@ -38,7 +38,7 @@ public class EvaluationReplanningStrategy extends SearchReplanningStrategy {
    @Override
    public String toString() {
       return "EvaluationReplanningStrategy-" + evaluations
-            + (this.doReusePreviousPlan ? "reusePortion=" + reusePortion : "");
+            + (this.reusePortion > 0 ? "reusePortion=" + reusePortion : "");
    }
 
 }
