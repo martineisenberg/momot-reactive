@@ -11,12 +11,12 @@ import at.ac.tuwien.big.momot.reactive.Printer;
 import at.ac.tuwien.big.momot.reactive.ReactiveExperiment;
 import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.ConditionReplanningStrategy;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.EvaluationReplanningStrategy;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.NaivePlanningStrategy;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult.PredictiveRunPlanningStats;
 import at.ac.tuwien.big.momot.reactive.result.ReactiveExperimentResult;
-import at.ac.tuwien.big.momot.search.criterion.MinimumObjectiveCondition;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
 import com.google.common.collect.ImmutableList;
@@ -51,19 +51,18 @@ public class ReactivePlanningSuite {
    /* EXPERIMENT CONFIGURATION */
 
    // ----------- Planning Cases ------------ //
-   final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays
-         .asList(PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
-               ConditionReplanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds))
-                     .withPredictivePlanning(List.of(2, 5), "NSGAII")));
-   // PlanningStrategy.create("NSGAII", 1000, EvaluationReplanningStrategy.create("NSGAII", 1000)),
-   // PlanningStrategy.create("NSGAII", 1000, NaivePlanningStrategy.get()));
+   final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays.asList(
+         PlanningStrategy.create("NSGAII", 10000, EvaluationReplanningStrategy.create("NSGAII", 10000)),
+         PlanningStrategy.create("NSGAII", 10000,
+               EvaluationReplanningStrategy.create("NSGAII", 10000).withPlanReuse(0.2)),
+         PlanningStrategy.create("NSGAII", 10000, NaivePlanningStrategy.get()));
 
    // ----------- Model, Algorithm ------------ //
-   final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std50_2500_27.359.xmi").toString();
+   final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std5_250_3.181.xmi").toString();
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
    final static int MAX_SOLUTION_LENGTH = 150;
    final static int POPULATION_SIZE = 100;
-   private static final int EXPERIMENT_RUNS = 3;
+   private static final int EXPERIMENT_RUNS = 2;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
 
    /* DISTURBER CONFIGURATION */
@@ -76,7 +75,7 @@ public class ReactivePlanningSuite {
    /* OUTPUTS */
    final static boolean VERBOSE = false;
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
-   final static String PRINT_FILENAME = "temp";
+   final static String PRINT_FILENAME = "50stacks_1to10_model_evaluations_10k";
    final static Printer PS_OUT = new Printer(Paths.get(PRINT_DIR, PRINT_FILENAME + ".txt").toString(),
          new StackSolutionWriter(new StackUtils().getFitnessFunction()));
    final static boolean PRINT_RESULTS_TO_CSV = true;
@@ -234,14 +233,18 @@ public class ReactivePlanningSuite {
          final List<String[]> appendValuesDist = new ArrayList<>();
          final List<String[]> appendValuesPred = new ArrayList<>();
 
-         for(final List<PredictiveRunResult> prr : e.getValue().getPredictiveRunResults()) {
-            final PredictiveRunResult curPrr = prr.get(0);
-            final String idlePlanObjStr = Arrays.toString(curPrr.getIdlePlanningObjectives());
-            for(final Entry<Integer, PredictiveRunPlanningStats> e2 : curPrr.getStepsToResult().entrySet()) {
-               final PredictiveRunPlanningStats prps = e2.getValue();
-               appendValuesPred
-                     .add(new String[] { idlePlanObjStr, e2.getKey().toString(), Arrays.toString(prps.getObjectives()),
-                           String.valueOf(prps.getEvaluations()), String.valueOf(prps.getRuntime()) });
+         if(!e.getValue().getPredictiveRunResults().isEmpty()) {
+            for(final List<PredictiveRunResult> prr : e.getValue().getPredictiveRunResults()) {
+               if(!prr.isEmpty()) {
+                  final PredictiveRunResult curPrr = prr.get(0);
+                  final String idlePlanObjStr = Arrays.toString(curPrr.getIdlePlanningObjectives());
+                  for(final Entry<Integer, PredictiveRunPlanningStats> e2 : curPrr.getStepsToResult().entrySet()) {
+                     final PredictiveRunPlanningStats prps = e2.getValue();
+                     appendValuesPred.add(
+                           new String[] { idlePlanObjStr, e2.getKey().toString(), Arrays.toString(prps.getObjectives()),
+                                 String.valueOf(prps.getEvaluations()), String.valueOf(prps.getRuntime()) });
+                  }
+               }
             }
          }
 
@@ -268,13 +271,11 @@ public class ReactivePlanningSuite {
 
       dataLines.add(0, header.toArray(new String[0]));
       dataLinesDist.add(0, headerDist.toArray(new String[0]));
-      dataLinesPred.add(0, headerPred.toArray(new String[0]));
 
       final File csvOutputFile = new File(path + ".csv");
       try(PrintWriter pw = new PrintWriter(csvOutputFile)) {
          dataLines.stream().map(CSVUtil::convertToCSV).forEach(pw::println);
       } catch(final FileNotFoundException e1) {
-         // TODO Auto-generated catch block
          e1.printStackTrace();
       }
 
@@ -282,16 +283,19 @@ public class ReactivePlanningSuite {
       try(PrintWriter pw = new PrintWriter(csvOutputFileDist)) {
          dataLinesDist.stream().map(CSVUtil::convertToCSV).forEach(pw::println);
       } catch(final FileNotFoundException e1) {
-         // TODO Auto-generated catch block
          e1.printStackTrace();
       }
 
-      final File csvOutputFilePred = new File(path + "_predictive.csv");
-      try(PrintWriter pw = new PrintWriter(csvOutputFilePred)) {
-         dataLinesPred.stream().map(CSVUtil::convertToCSV).forEach(pw::println);
-      } catch(final FileNotFoundException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
+      if(dataLinesPred.size() > 0) {
+
+         dataLinesPred.add(0, headerPred.toArray(new String[0]));
+
+         final File csvOutputFilePred = new File(path + "_predictive.csv");
+         try(PrintWriter pw = new PrintWriter(csvOutputFilePred)) {
+            dataLinesPred.stream().map(CSVUtil::convertToCSV).forEach(pw::println);
+         } catch(final FileNotFoundException e1) {
+            e1.printStackTrace();
+         }
       }
    }
 

@@ -140,8 +140,8 @@ public class ReactiveExperiment {
             // p.subheader("Predictive Replanning", verbose);
             p.str(String.format(
                   "Pred. Replanning (%d steps): Thresholds: %s -> Found %s after %d iterations (%f seconds)",
-                  afterSteps, ((ConditionReplanningStrategy) srStrategy).getTerminationCondition().toString(),
-                  Arrays.toString(s.getObjectives()), res.getExecutionEvaluations(), res.getExecutionTime()));
+                  afterSteps, moc.toString(), Arrays.toString(s.getObjectives()), res.getExecutionEvaluations(),
+                  res.getExecutionTime()));
 
          }
       }
