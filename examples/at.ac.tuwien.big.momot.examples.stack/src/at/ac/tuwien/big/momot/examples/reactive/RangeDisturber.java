@@ -50,7 +50,7 @@ public class RangeDisturber extends AbstractDisturber implements IRangeDisturber
       }
 
       if(disturbanceIndex == curExecutionNr) {
-         this.disturb(nextExecution);
+         this.disturb();
          nrOfObservedDisturbances++;
          return Disturbance.of(eType, curExecutionNr, plannedExecutions);
       }
@@ -69,7 +69,7 @@ public class RangeDisturber extends AbstractDisturber implements IRangeDisturber
 
    @Override
    public String toString() {
-      return String.format("DISTURBER@%s_%s", eType, eOccurence);
+      return String.format("DISTURBER@%s_%s_errPerDisturbance-%d", eType, eOccurence, errorsPerDisturbance);
    }
 
 }

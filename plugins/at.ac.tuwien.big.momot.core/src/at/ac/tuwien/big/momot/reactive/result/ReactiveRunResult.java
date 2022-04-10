@@ -8,6 +8,7 @@ import java.util.List;
 public class ReactiveRunResult {
    private double finalObjective;
    private final List<Double> postDisturbanceObjectives;
+   private final List<Double> preDisturbanceObjectives;
    private final List<Double> plannedObjectives;
 
    private final List<Double> runtimes;
@@ -18,6 +19,8 @@ public class ReactiveRunResult {
 
    public ReactiveRunResult() {
       this.postDisturbanceObjectives = new ArrayList<>();
+      this.preDisturbanceObjectives = new ArrayList<>();
+
       this.plannedObjectives = new ArrayList<>();
 
       this.runtimes = new ArrayList<>();
@@ -46,6 +49,10 @@ public class ReactiveRunResult {
       this.predictiveRunResults.add(prr);
    }
 
+   public void addPreDisturbanceObjective(final double objectiveValue) {
+      this.preDisturbanceObjectives.add(objectiveValue);
+   }
+
    public List<Disturbance> getDisturbances() {
       return this.disturbances;
    }
@@ -72,6 +79,10 @@ public class ReactiveRunResult {
 
    public List<PredictiveRunResult> getPredictiveRunResults() {
       return this.predictiveRunResults;
+   }
+
+   public List<Double> getPreDisturbanceObjectives() {
+      return this.preDisturbanceObjectives;
    }
 
    public List<Double> getRuntimes() {

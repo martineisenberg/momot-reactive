@@ -48,7 +48,7 @@ public class TransformationParameterMutation extends AbstractTransformationMutat
       ITransformationVariable randomVariable = CollectionUtil.getRandomElement(mutant.getVariables());
       int nrTries = 0;
       while(randomVariable instanceof IPlaceholderVariable) {
-         if(++nrTries == 3) {
+         if(++nrTries == mutant.getVariables().length) {
             return mutant;
          }
          randomVariable = CollectionUtil.getRandomElement(mutant.getVariables());

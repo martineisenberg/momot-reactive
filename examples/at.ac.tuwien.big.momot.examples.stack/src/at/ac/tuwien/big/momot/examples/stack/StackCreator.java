@@ -41,7 +41,7 @@ public class StackCreator {
       final StackCreator c = new StackCreator();
       final Random r = new Random();
 
-      c.createStacksGraph(50, r.ints(50, 1, 25).toArray(), "model/gen50.xmi");
+      c.createStacksGraph(100, r.ints(100, 1, 100).toArray(), "model/gen100_1to100.xmi");
    }
 
    private static String newName() {

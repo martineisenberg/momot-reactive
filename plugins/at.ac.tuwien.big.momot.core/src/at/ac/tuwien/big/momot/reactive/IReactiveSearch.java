@@ -12,7 +12,7 @@ public interface IReactiveSearch {
 
    public SearchResult performSearch(final EGraph graph, final String algorithmName, String experimentName, int run,
          final int evaluations, final TerminationCondition terminationCondition, final int solutionLength,
-         final int populationSize, final List<ITransformationVariable> reinitSeed, final double reinistBestObj,
-         double reinitPortion, boolean recordBestObjective);
+         final int populationSize, final List<List<ITransformationVariable>> reinitSeed, final double reinistBestObj,
+         boolean recordBestObjective);
 
 }

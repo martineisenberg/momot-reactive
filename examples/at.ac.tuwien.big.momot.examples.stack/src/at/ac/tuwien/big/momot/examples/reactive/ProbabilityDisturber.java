@@ -59,7 +59,7 @@ public class ProbabilityDisturber extends AbstractDisturber {
 
       // Disturb by probability
       if(rand.nextFloat() < eProbability) {
-         this.disturb(nextExecution);
+         this.disturb();
          nrOfObservedDisturbances++;
          return Disturbance.of(eType, curExecutionNr, plannedExecutions);
       }

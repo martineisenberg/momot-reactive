@@ -1,5 +1,6 @@
 package at.ac.tuwien.big.momot.search.criterion;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -8,13 +9,13 @@ import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.TerminationCondition;
 
-public class MinimumObjectiveCondition implements TerminationCondition {
+public class MinimumObjectiveCondition implements TerminationCondition, ThresholdCondition {
 
    public static MinimumObjectiveCondition create(final Map<Integer, Double> objectiveThresholds) {
       return new MinimumObjectiveCondition(objectiveThresholds);
    }
 
-   private final Map<Integer, Double> objectiveThresholds;
+   private Map<Integer, Double> objectiveThresholds;
 
    private MinimumObjectiveCondition(final Map<Integer, Double> objectiveThresholds) {
       this.objectiveThresholds = objectiveThresholds;
@@ -27,6 +28,11 @@ public class MinimumObjectiveCondition implements TerminationCondition {
          v[i++] = n;
       }
       return v;
+   }
+
+   @Override
+   public Map<Integer, Double> getThresholds() {
+      return this.objectiveThresholds;
    }
 
    @Override
@@ -47,18 +53,34 @@ public class MinimumObjectiveCondition implements TerminationCondition {
    }
 
    @Override
+   public void setThreshold(final int conditionIndex, final double val) {
+      this.objectiveThresholds = new HashMap<>(this.objectiveThresholds);
+      this.objectiveThresholds.put(conditionIndex, val);
+   }
+
+   @Override
    public boolean shouldTerminate(final Algorithm algorithm) {
       final NondominatedPopulation p = algorithm.getResult();
+      double minObj = Double.POSITIVE_INFINITY;
+      // Solution minSol = null;
       for(final Solution s : p) {
-         System.out.println(s.getObjective(0));
-         if(satisfiesCriteria(s)) {
+         final double curObj = s.getObjective(0);
+         if(curObj < minObj) {
+            minObj = curObj;
+         }
+      }
+      System.out.println(minObj);
 
-            System.out.println("Finished after " + algorithm.getNumberOfEvaluations());
+      for(final Solution s : p) {
+         // System.out.println(s.getObjective(0));
+
+         if(satisfiesCriteria(s)) {
+            System.out.println("Finished after " + algorithm.getNumberOfEvaluations() + " evaluations");
             return true;
 
          }
-
       }
+
       return false;
    }
 

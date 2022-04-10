@@ -107,17 +107,17 @@ public abstract class AbstractDisturber {
 
    }
 
-   protected void disturb(final ITransformationVariable nextStep) {
+   public void disturb() {
       for(int i = 0; i < this.errorsPerDisturbance; i++) {
 
          switch(eType) {
             case WEAK_ERROR:
 
                break;
-            case STRONG_ERROR:
-               removeStackToShiftFrom(mre.getGraph(), nextStep);
+            case REMOVE_STACKS:
+               removeStackToShiftFrom(mre.getGraph());
                break;
-            case OPTIMALITY_ERROR:
+            case ADD_STACKS:
                addStack(mre.getGraph());
                break;
          }
@@ -139,7 +139,7 @@ public abstract class AbstractDisturber {
    public abstract Disturbance pollForDisturbance(final int curExecutionNr, final int plannedExecutions,
          final ITransformationVariable nextExecution);
 
-   protected void removeStackToShiftFrom(final EGraph graph, final ITransformationVariable nextStep) {
+   protected void removeStackToShiftFrom(final EGraph graph) {
       final StackModel sm = MomotUtil.getRoot(graph, StackModel.class);
 
       // final String removeStackIdx = (String) nextStep.getResultParameterValue("fromId");

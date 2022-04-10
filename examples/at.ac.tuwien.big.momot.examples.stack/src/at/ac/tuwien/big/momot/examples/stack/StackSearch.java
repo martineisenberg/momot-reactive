@@ -10,7 +10,6 @@ import at.ac.tuwien.big.moea.search.algorithm.EvolutionaryAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.RLAlgorithmFactory;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment.IEnvironment;
-import at.ac.tuwien.big.moea.search.algorithm.reinforcement.utils.IRLUtils;
 import at.ac.tuwien.big.momot.TransformationSearchOrchestration;
 import at.ac.tuwien.big.momot.examples.stack.stack.StackPackage;
 import at.ac.tuwien.big.momot.problem.solution.TransformationSolution;
@@ -21,7 +20,6 @@ import at.ac.tuwien.big.momot.reactive.result.SearchResult;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationParameterMutation;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationPlaceholderMutation;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationVariableMutation;
-import at.ac.tuwien.big.momot.search.algorithm.reinforcement.algorithm.RLUtils;
 import at.ac.tuwien.big.momot.search.algorithm.reinforcement.datastructures.SOQTable;
 import at.ac.tuwien.big.momot.search.algorithm.reinforcement.environment.EnvironmentBuilder;
 import at.ac.tuwien.big.momot.search.fitness.IEGraphMultiDimensionalFitnessFunction;
@@ -32,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -219,8 +218,7 @@ public class StackSearch implements IReactiveSearch {
    // }
 
    protected TransformationSearchOrchestration createOrchestration(final EGraph graph, final String algorithmName,
-         final int solutionLength, final int populationSize, final List<ITransformationVariable> reinitSeed,
-         final double reinitPortion) {
+         final int solutionLength, final int populationSize, final List<List<ITransformationVariable>> reinitSeed) {
       StackPackage.eINSTANCE.eClass();
 
       final StackOrchestration orchestration = new StackOrchestration(graph, solutionLength);
@@ -229,18 +227,39 @@ public class StackSearch implements IReactiveSearch {
             .createEvolutionaryAlgorithmFactory(populationSize);
 
       /** Reinit seed for evolutionary algorithms **/
-      if(reinitSeed != null && reinitPortion > 0 && algorithmName.compareTo("NSGAII") == 0) {
-         final int insertNrOfSolutions = (int) (populationSize * reinitPortion) > 0
-               ? (int) (populationSize * reinitPortion)
-               : 1;
+      if(reinitSeed != null && algorithmName.compareTo("NSGAII") == 0) {
+         // final int insertNrOfSolutions = (int) (populationSize * reinitPortion) > 0
+         // ? (int) (populationSize * reinitPortion)
+         // : 1;
 
-         final TransformationSolution[] solutionArr = new TransformationSolution[insertNrOfSolutions];
+         final TransformationSolution[] solutionArr = new TransformationSolution[reinitSeed.size()];
 
-         reinitSeed.addAll(Stream.generate(TransformationPlaceholderVariable::new)
-               .limit(solutionLength - reinitSeed.size()).collect(Collectors.toList()));
+         for(int i = 0; i < reinitSeed.size(); i++) {
+            final List<ITransformationVariable> seq = reinitSeed.get(i);
 
-         Arrays.fill(solutionArr, new TransformationSolution(MomotUtil.copy(graph), reinitSeed,
-               orchestration.getFitnessFunction().evaluatesNrObjectives()));
+            List<ITransformationVariable> initSequence = new ArrayList<>(seq);
+            if(seq.size() < solutionLength) {
+               initSequence = Stream
+                     .of(initSequence,
+                           Stream.generate(TransformationPlaceholderVariable::new)
+                                 .limit(solutionLength - initSequence.size()).collect(Collectors.toList()))
+                     .flatMap(Collection::stream).collect(Collectors.toList());
+            } else {
+               initSequence = initSequence.subList(0, solutionLength);
+            }
+
+            // seq.addAll(Stream.generate(TransformationPlaceholderVariable::new).limit(solutionLength - seq.size())
+            // .collect(Collectors.toList()));
+
+            // orchestration.getSearchHelper().appendRandomVariables(null, i);
+
+            solutionArr[i] = new TransformationSolution(MomotUtil.copy(graph), initSequence,
+                  orchestration.getFitnessFunction().evaluatesNrObjectives());
+
+         }
+
+         // Arrays.fill(solutionArr, new TransformationSolution(MomotUtil.copy(graph), reinitSeed,
+         // orchestration.getFitnessFunction().evaluatesNrObjectives()));
 
          moea.setInitialSolutions(List.of(solutionArr));
       }
@@ -252,40 +271,52 @@ public class StackSearch implements IReactiveSearch {
 
       /** Reinit seed for reinforcement algorithms (table) **/
 
-      SOQTable<List<ApplicationState>, List<ApplicationState>> qTableInitialized = null;
+      final SOQTable<List<ApplicationState>, List<ApplicationState>> qTableInitialized = null;
 
       if(reinitSeed != null
             && (algorithmName.compareTo("QLearning") == 0 || algorithmName.compareTo("QLearningExplore") == 0)) {
 
-         final TransformationSolution ts = TransformationSolution
-               .removePlaceholdersKeepUnitApplicationAssignment(new TransformationSolution(MomotUtil.copy(graph),
-                     reinitSeed, orchestration.getFitnessFunction().evaluatesNrObjectives()));
-
-         final IRLUtils<TransformationSolution> rlUtils = new RLUtils<>();
-         qTableInitialized = new SOQTable<>();
-
-         final List<ApplicationState> as = rlUtils.getApplicationStates(ts);
-         for(int i = 0; i < as.size(); i++) {
-
-            final List<ApplicationState> stateRepr = as.subList(0, i);
-            qTableInitialized.addStateIfNotExists(stateRepr);
-
-            final TransformationSolution curStateTS = new TransformationSolution(MomotUtil.copy(graph),
-                  ts.getVariablesAsList().subList(0, i + 1), orchestration.getNumberOfObjectives());
-            final double fitness = orchestration.getFitnessFunction().evaluate(curStateTS);
-            qTableInitialized.update(stateRepr, i < as.size() - 1 ? as.subList(i, i + 1) : List.of(as.get(i)), fitness);
-
-         }
+         throw new RuntimeException("Reimplement seed reuse for RL algorithms!");
+         // final TransformationSolution ts = TransformationSolution
+         // .removePlaceholdersKeepUnitApplicationAssignment(new TransformationSolution(MomotUtil.copy(graph),
+         // reinitSeed.get(0), orchestration.getFitnessFunction().evaluatesNrObjectives()));
+         //
+         // final IRLUtils<TransformationSolution> rlUtils = new RLUtils<>();
+         // qTableInitialized = new SOQTable<>();
+         //
+         // final List<ApplicationState> as = rlUtils.getApplicationStates(ts);
+         // for(int i = 0; i < as.size(); i++) {
+         //
+         // final List<ApplicationState> stateRepr = as.subList(0, i);
+         // qTableInitialized.addStateIfNotExists(stateRepr);
+         //
+         // final TransformationSolution curStateTS = new TransformationSolution(MomotUtil.copy(graph),
+         // ts.getVariablesAsList().subList(0, i + 1), orchestration.getNumberOfObjectives());
+         // final double fitness = orchestration.getFitnessFunction().evaluate(curStateTS);
+         // qTableInitialized.update(stateRepr, i < as.size() - 1 ? as.subList(i, i + 1) : List.of(as.get(i)), fitness);
+         //
+         // }
       }
 
       final RLAlgorithmFactory<TransformationSolution> rl = orchestration.createRLAlgorithmFactory(env,
             qTableInitialized);
+      // if(algorithmName.compareTo("NSGAII_1") == 0) {
+      // orchestration.addAlgorithm(algorithmName, moea.createCustomNSGAII(new TournamentSelection(2),
+      // // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+      // List.of(new CustomOnePointCrossover(1.0, orchestration.getSearchHelper(), false),
+      // new TransformationParameterMutation(0.2, orchestration.getModuleManager())),
+      //
+      // .9, .1, 1.0, 0.01, 10));
+      //
+      // }
+
       if(algorithmName.compareTo("NSGAII") == 0) {
-         orchestration.addAlgorithm(algorithmName,
-               moea.createNSGAII(new TournamentSelection(2), new OnePointCrossover(1.0),
-                     new TransformationParameterMutation(0.2, orchestration.getModuleManager()),
-                     new TransformationPlaceholderMutation(0.1),
-                     new TransformationVariableMutation(orchestration.getSearchHelper(), 0.1)));
+         orchestration.addAlgorithm(algorithmName, moea.createNSGAII(new TournamentSelection(2),
+               // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+               new OnePointCrossover(1.0), new TransformationParameterMutation(0.1, orchestration.getModuleManager()),
+               new TransformationVariableMutation(orchestration.getSearchHelper(), 0.25),
+               new TransformationPlaceholderMutation(0.1)));
+
       }
 
       if(algorithmName.compareTo("QLearning") == 0) {
@@ -309,8 +340,6 @@ public class StackSearch implements IReactiveSearch {
             continue;
          }
 
-         double minStd = Double.POSITIVE_INFINITY;
-         TransformationSolution optimalTS = null;
          final Accumulator acc = entry.getKey().getInstrumenter().getLastAccumulator();
          double executionTime = 0;
          int performedEvaluations = 0;
@@ -320,19 +349,22 @@ public class StackSearch implements IReactiveSearch {
          }
 
          final Population population = SearchResultManager.createApproximationSet(experiment, algorithmName);
+         final Population resultPopulation = new NondominatedPopulation();
          for(final TransformationSolution ts : MomotUtil.asIterables(population, TransformationSolution.class)) {
-            final double curStd = ts
-                  .getObjective(orchestration.getFitnessFunction().getObjectiveIndex("Standard Deviation"));
-            if(curStd < minStd) {
-               minStd = curStd;
-               optimalTS = TransformationSolution.removePlaceholders(ts);
-               ts.execute();
-            }
-         }
-         orchestration.getFitnessFunction().evaluate(optimalTS);
+            // final double curStd = ts
+            // .getObjective(orchestration.getFitnessFunction().getObjectiveIndex("Standard Deviation"));
+            // if(curStd < minStd) {
+            // minStd = curStd;
+            // optimalTS = TransformationSolution.removePlaceholders(ts);
+            // ts.execute();
+            // }
+            final TransformationSolution addSol = TransformationSolution.removePlaceholders(ts);
 
-         return new SearchResult(population, optimalTS, optimalTS.getVariablesAsList(), executionTime,
-               performedEvaluations);
+            orchestration.getFitnessFunction().evaluate(addSol);
+            resultPopulation.add(addSol);
+         }
+
+         return new SearchResult(resultPopulation, executionTime, performedEvaluations);
 
       }
       return null;
@@ -400,10 +432,10 @@ public class StackSearch implements IReactiveSearch {
    @Override
    public SearchResult performSearch(final EGraph graph, final String algorithmName, final String experimentName,
          final int run, final int evaluations, final TerminationCondition condition, final int solutionLength,
-         final int populationSize, final List<ITransformationVariable> reinitSeed, final double reinitBestObj,
-         final double reinitPortion, final boolean recordBestObjective) {
+         final int populationSize, final List<List<ITransformationVariable>> reinitSeed, final double reinitBestObj,
+         final boolean recordBestObjective) {
       final TransformationSearchOrchestration orchestration = createOrchestration(graph, algorithmName, solutionLength,
-            populationSize, reinitSeed, reinitPortion);
+            populationSize, reinitSeed);
 
       deriveBaseName(orchestration);
 

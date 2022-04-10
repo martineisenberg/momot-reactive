@@ -21,7 +21,7 @@ import org.eclipse.emf.henshin.interpreter.EGraph;
 
 public class StackOrchestration extends TransformationSearchOrchestration {
 
-   private int maxShift = 5;
+   private int maxShift = 50;
 
    public StackOrchestration(final EGraph initialGraph, final int nrVariables) {
       super(new ModuleManager(".", Paths.get("model", "stack.henshin").toString()), initialGraph, nrVariables);

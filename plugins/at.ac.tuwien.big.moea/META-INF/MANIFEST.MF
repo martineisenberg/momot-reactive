@@ -25,6 +25,7 @@ Export-Package:
  at.ac.tuwien.big.moea.search.algorithm.operator.crossover,
  at.ac.tuwien.big.moea.search.algorithm.operator.mutation,
  at.ac.tuwien.big.moea.search.algorithm.provider,
+ at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures,
  at.ac.tuwien.big.moea.search.algorithm.reinforcement.domain,
  at.ac.tuwien.big.moea.search.algorithm.reinforcement.environment,
  at.ac.tuwien.big.moea.search.algorithm.reinforcement.networks,

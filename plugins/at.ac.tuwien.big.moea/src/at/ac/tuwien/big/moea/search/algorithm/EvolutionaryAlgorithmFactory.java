@@ -1,6 +1,7 @@
 package at.ac.tuwien.big.moea.search.algorithm;
 
 import at.ac.tuwien.big.moea.ISearchOrchestration;
+import at.ac.tuwien.big.moea.search.algorithm.operator.CustomCompoundVariation;
 import at.ac.tuwien.big.moea.search.algorithm.operator.mutation.PlaceholderMutation;
 import at.ac.tuwien.big.moea.search.algorithm.provider.AbstractRegisteredAlgorithm;
 import at.ac.tuwien.big.moea.search.algorithm.provider.IRegisteredAlgorithm;
@@ -26,7 +27,6 @@ import org.moeaframework.core.Selection;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
 import org.moeaframework.core.fitness.IndicatorFitnessEvaluator;
-import org.moeaframework.core.operator.CompoundVariation;
 import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.UniformSelection;
@@ -55,6 +55,19 @@ public class EvolutionaryAlgorithmFactory<S extends Solution> extends AbstractAl
 
    public void addInitialSolutions(final List<S> solutions) {
       this.initialSolutions.addAll(solutions);
+   }
+
+   public IRegisteredAlgorithm<CustomNSGAII> createCustomNSGAII(final Selection selection,
+         final List<Variation> variation, final double increaseMutationTo, final double decreaseRecombinationTo,
+         final double delta, final double increaseBy, final int everyNGens) {
+      return new AbstractRegisteredAlgorithm<CustomNSGAII>() {
+         @Override
+         public CustomNSGAII createAlgorithm() {
+            return new CustomNSGAII(createProblem(), createSortingPopulation(), createEpsilonBoxArchive(), selection,
+                  createVariation(variation), createInitialization(), increaseMutationTo, decreaseRecombinationTo,
+                  delta, increaseBy, everyNGens);
+         }
+      };
    }
 
    public IRegisteredAlgorithm<AdaptiveTimeContinuation> createENSGAII(final double injectionRate,
@@ -103,9 +116,27 @@ public class EvolutionaryAlgorithmFactory<S extends Solution> extends AbstractAl
       return initialization;
    }
 
+   protected Initialization createInitialization(final List<S> initialPopulation) {
+      final IInjectedPopulationGenerator<S> initialization = getSearchOrchestration()
+            .createPopulationGenerator(getPopulationSize());
+      initialization.addInjectedSolutions(initialPopulation);
+      return initialization;
+   }
+
    public IRegisteredAlgorithm<NSGAII> createNSGAII() {
       return createNSGAII(new TournamentSelection(2), new OnePointCrossover(1.0),
             new PlaceholderMutation(DEFAULT_MUTATION_PROBABILITY));
+   }
+
+   public IRegisteredAlgorithm<NSGAII> createNSGAII(final List<S> initialPopulation, final Selection selection,
+         final Variation... variation) {
+      return new AbstractRegisteredAlgorithm<NSGAII>() {
+         @Override
+         public NSGAII createAlgorithm() {
+            return new NSGAII(createProblem(), createSortingPopulation(), createEpsilonBoxArchive(), selection,
+                  createVariation(variation), createInitialization(initialPopulation));
+         }
+      };
    }
 
    public IRegisteredAlgorithm<NSGAII> createNSGAII(final Selection selection, final Variation... variation) {
@@ -199,8 +230,12 @@ public class EvolutionaryAlgorithmFactory<S extends Solution> extends AbstractAl
       return createSPEA2(numberOfOffspring, 1, variation);
    }
 
+   protected Variation createVariation(final List<Variation> variation) {
+      return new CustomCompoundVariation(variation.toArray(new Variation[0]));
+   }
+
    protected Variation createVariation(final Variation... variation) {
-      return new CompoundVariation(variation);
+      return new CustomCompoundVariation(variation);
    }
 
    public AbstractRegisteredAlgorithm<VEGA> createVEGA(final Variation... variation) {

@@ -43,7 +43,7 @@ public class ReactivePlanning {
    final static String EVAL_OBJECTIVE = "Standard Deviation";
 
    /* DISTURBER CONFIGURATION */
-   private static final ErrorType ERROR_TYPE = ErrorType.OPTIMALITY_ERROR;
+   private static final ErrorType ERROR_TYPE = ErrorType.ADD_STACKS;
    private static final ErrorOccurence ERROR_OCCURENCE = ErrorOccurence.FIRST_10_PERCENT;
    private static final float ERROR_PROBABILITY = 0.8f;
    private static final int MAX_DISTURBANCES_PER_RUN = 1;

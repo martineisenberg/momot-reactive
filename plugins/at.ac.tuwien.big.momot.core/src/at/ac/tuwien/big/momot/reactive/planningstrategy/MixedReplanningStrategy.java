@@ -15,7 +15,7 @@ public class MixedReplanningStrategy extends SearchReplanningStrategy {
 
    protected MixedReplanningStrategy(final String replanningAlgorithm, final EvaluationReplanningStrategy erStrategy,
          final ConditionReplanningStrategy crStrategy) {
-      super(RepairStrategy.MIXED, replanningAlgorithm);
+      super(RepairStrategy.MIXED, replanningAlgorithm, null);
       this.crStrategy = crStrategy;
       this.erStrategy = erStrategy;
    }
@@ -23,13 +23,13 @@ public class MixedReplanningStrategy extends SearchReplanningStrategy {
    @Override
    public SearchResult replan(final IReactiveSearch search, final EGraph graph, final String algorithmName,
          final String experimentName, final int run, final int solutionLength, final int populationSize,
-         final List<ITransformationVariable> reinitSeed, final double reinitPortion, final double reinitBestObj,
+         final List<List<ITransformationVariable>> reinitSeed, final double reinitBestObj,
          final boolean recordBestObjective) {
 
       return search.performSearch(graph, algorithmName, experimentName, run,
             this.erStrategy != null ? this.erStrategy.getEvaluations() : 0,
             this.crStrategy != null ? this.crStrategy.getTerminationCondition() : null, solutionLength, populationSize,
-            reinitSeed, reinitBestObj, reinitPortion, recordBestObjective);
+            reinitSeed, reinitBestObj, recordBestObjective);
    }
 
    @Override

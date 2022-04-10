@@ -12,11 +12,15 @@
  *******************************************************************************/
 package at.ac.tuwien.big.momot.util;
 
+import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
 import at.ac.tuwien.big.moea.util.CastUtil;
 import at.ac.tuwien.big.momot.problem.solution.TransformationSolution;
+import at.ac.tuwien.big.momot.search.algorithm.reinforcement.algorithm.RLUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -121,6 +125,16 @@ public final class MomotUtil {
          return MomotUtil.copy(g);
       }
       return g;
+   }
+
+   public static float getOverlappingVarProportion(final Solution s1, final Solution s2) {
+
+      final RLUtils<Solution> utils = new RLUtils<>();
+      final List<ApplicationState> al1 = utils.getApplicationStates(s1);
+      final List<ApplicationState> al2 = utils.getApplicationStates(s2);
+
+      final Set<ApplicationState> result = al1.stream().distinct().filter(al2::contains).collect(Collectors.toSet());
+      return (float) result.size() / (float) Math.min(al1.size(), al2.size());
    }
 
    public static EObject getRoot(final EGraph graph) {

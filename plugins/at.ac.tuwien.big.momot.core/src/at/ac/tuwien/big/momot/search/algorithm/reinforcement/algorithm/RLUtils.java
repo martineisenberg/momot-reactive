@@ -1,5 +1,6 @@
 package at.ac.tuwien.big.momot.search.algorithm.reinforcement.algorithm;
 
+import at.ac.tuwien.big.moea.problem.solution.variable.IPlaceholderVariable;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.IMOQTableAccessor;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.IParetoQTableAccessor;
@@ -67,7 +68,9 @@ public class RLUtils<S extends Solution> implements IRLUtils<S> {
 
       for(int i = 0; i < solution.getNumberOfVariables(); i++) {
          final UnitApplication ua = (UnitApplication) solution.getVariable(i);
-         stateList.add(unitApplicationToApplicationState(ua));
+         if(!(ua instanceof IPlaceholderVariable)) {
+            stateList.add(unitApplicationToApplicationState(ua));
+         }
       }
 
       return stateList;
@@ -262,6 +265,7 @@ public class RLUtils<S extends Solution> implements IRLUtils<S> {
    }
 
    private ApplicationState unitApplicationToApplicationState(final UnitApplication ua) {
+
       Map<String, Object> params = new HashMap<>();
       final List<RuleApplication> appliedRules = new ArrayList<>();
       if(ua instanceof UnitApplicationVariable) {
@@ -273,6 +277,7 @@ public class RLUtils<S extends Solution> implements IRLUtils<S> {
       }
 
       final ApplicationState a = new ApplicationState(ua.getUnit(), params, appliedRules);
+
       return a;
    }
 

@@ -478,6 +478,12 @@ public class SearchHelper {
          }
       }
       solution.setTransformation(variables, searchGraph);
+
+      // final StackModel sm = MomotUtil.getRoot(searchGraph, StackModelImpl.class);
+      //
+      // for(final Stack s : sm.getStacks().subList(sm.getStacks().size() - 5, sm.getStacks().size())) {
+      // System.out.printf("%s: %d\n", s.getId(), s.getLoad());
+      // }
       return solution;
    }
 

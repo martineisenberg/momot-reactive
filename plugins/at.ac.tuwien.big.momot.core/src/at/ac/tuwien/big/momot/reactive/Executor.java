@@ -1,7 +1,12 @@
 package at.ac.tuwien.big.momot.reactive;
 
 import at.ac.tuwien.big.momot.problem.solution.variable.ITransformationVariable;
+import at.ac.tuwien.big.momot.problem.solution.variable.UnitApplicationVariable;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.eclipse.emf.henshin.interpreter.EGraph;
 import org.eclipse.emf.henshin.interpreter.Engine;
 import org.eclipse.emf.henshin.interpreter.UnitApplication;
 import org.eclipse.emf.henshin.interpreter.impl.EngineImpl;
@@ -41,6 +46,21 @@ public class Executor {
       }
 
       return application.execute(null);
+   }
+
+   public ITransformationVariable execute(final String unitName, final EGraph graph, final Map<String, Object> params) {
+      final Unit unit = this.module.getUnit(unitName);
+      final UnitApplicationVariable applicationVar = new UnitApplicationVariable(engine, graph, unit, null);
+
+      for(final Entry<String, Object> e : params.entrySet()) {
+         applicationVar.setParameterValue(e.getKey(), e.getValue());
+      }
+
+      // (final Engine engine, final EGraph graph, final Rule rule,
+      // final Assignment partialMatch)
+      applicationVar.execute(null);
+
+      return applicationVar;
    }
 
    public void setModelRuntimeEnvironment(final ModelRuntimeEnvironment mre) {
