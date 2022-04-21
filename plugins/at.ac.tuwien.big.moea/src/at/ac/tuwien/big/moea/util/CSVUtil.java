@@ -15,6 +15,16 @@ public class CSVUtil {
       }
    }
 
+   public static void addWithEnumeration(final List<String[]> data, final String[] exp, final List<String[]> addVals,
+         final int div) {
+      int run = 0;
+
+      for(final String[] o : addVals) {
+         data.add(concatArrays(exp, new String[] { String.valueOf(run / div) }, o));
+         run++;
+      }
+   }
+
    public static String[] concatArrays(final String[]... arrays) {
       return Arrays.stream(arrays).flatMap(Arrays::stream).toArray(String[]::new);
    }

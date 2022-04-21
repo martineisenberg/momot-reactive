@@ -34,115 +34,129 @@ public class StackHeuristic implements Heuristic {
    }
 
    @Override
-   public List<ITransformationVariable> getInitialPopulationTs(final EGraph g, final Executor executor,
+   public List<ITransformationVariable> getInitialPopulationTs(EGraph g, final Executor executor,
          final int maxSolutionLength) {
+      g = MomotUtil.copy(g);
       final StackModel sm = MomotUtil.getRoot(g, StackModelImpl.class);
       final double initialStd = MathUtil
             .getStandardDeviation(sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList()));
 
       final List<ITransformationVariable> concatTrafoSeq = new ArrayList<>();
 
-      // while(concatTrafoSeq.size() < maxSolutionLength) {
-      final int noStacks = sm.getStacks().size();
+      for(int i = 0; i < 30; i++) {
+         // while(concatTrafoSeq.size() < maxSolutionLength) {
+         final int noStacks = sm.getStacks().size();
 
-      final List<Integer> loads = sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList());
-      final double std = MathUtil.getStandardDeviation(loads);
-      final double mean = MathUtil.getMean(loads);
-      final List<Stack> lows = sm.getStacks().stream().filter(s -> s.getLoad() < mean).collect(Collectors.toList());
-      final Map<Stack, Map<Stack, Double>> stackRankings = new HashMap<>();
-      final List<Stack> highs = sm.getStacks().stream().filter(s1 -> s1.getLoad() > Math.ceil(mean))
-            .collect(Collectors.toList());
-      System.out.println(sm.getStacks().stream().map(s1 -> s1.getLoad()).collect(Collectors.toList()));
+         final List<Integer> loads = sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList());
+         final double std = MathUtil.getStandardDeviation(loads);
+         final double mean = MathUtil.getMean(loads);
+         final List<Stack> lows = sm.getStacks().stream().filter(s -> s.getLoad() < mean).collect(Collectors.toList());
+         final Map<Stack, Map<Stack, Double>> stackRankings = new HashMap<>();
+         final List<Stack> highs = sm.getStacks().stream().filter(s1 -> s1.getLoad() > Math.ceil(mean))
+               .collect(Collectors.toList());
+         System.out.println(
+               "Loading state: " + sm.getStacks().stream().map(s1 -> s1.getLoad()).collect(Collectors.toList()));
 
-      // final List<ITransformationVariable> transformationSeqs = new ArrayList<>();
+         // final List<ITransformationVariable> transformationSeqs = new ArrayList<>();
 
-      for(final Stack s : lows) {
+         for(final Stack s : lows) {
 
-         final Map<Stack, Double> potentials = new HashMap<>();
-         for(final Stack h : highs) {
-            final double curPotential = rankStackPotential(sm.getStacks(), mean, h, s);
-            potentials.put(h, curPotential);
+            final Map<Stack, Double> potentials = new HashMap<>();
+            for(final Stack h : highs) {
+               final double curPotential = rankStackPotential(sm.getStacks(), mean, h, s);
+               potentials.put(h, curPotential);
+            }
+            stackRankings.put(s, potentials);
          }
-         stackRankings.put(s, potentials);
-      }
 
-      while(lows.size() > 0) {
-         Stack selectedTargetStack = null;
-         double maxPotential = Double.NEGATIVE_INFINITY;
-         Stack maxPotentialStack = null;
+         while(lows.size() > 0) {
+            Stack selectedTargetStack = null;
+            double maxPotential = Double.NEGATIVE_INFINITY;
+            Stack maxPotentialStack = null;
 
-         final List<ITransformationVariable> curTransformationSeq = new ArrayList<>();
+            final List<ITransformationVariable> curTransformationSeq = new ArrayList<>();
 
-         // final int curLowestLoadInLayout = stackRankings.keySet().stream().map(s -> s.getLoad()).mapToInt(l ->
-         // l).min()
-         // .getAsInt();
-         // final Map<Stack, Map<Stack, Double>> lowestLoadStackRankings = stackRankings.entrySet().stream()
-         // .filter(entry -> entry.getKey().getLoad() == curLowestLoadInLayout)
-         // .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            // final int curLowestLoadInLayout = stackRankings.keySet().stream().map(s -> s.getLoad()).mapToInt(l ->
+            // l).min()
+            // .getAsInt();
+            // final Map<Stack, Map<Stack, Double>> lowestLoadStackRankings = stackRankings.entrySet().stream()
+            // .filter(entry -> entry.getKey().getLoad() == curLowestLoadInLayout)
+            // .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-         final Iterator<Entry<Stack, Map<Stack, Double>>> stackRankingIter = stackRankings.entrySet().iterator();
-         while(stackRankingIter.hasNext()) {
-            final Entry<Stack, Map<Stack, Double>> targetsToSources = stackRankingIter.next();
-            final Stack rankingOfStack = targetsToSources.getKey();
-            if(targetsToSources.getValue().isEmpty()) {
-               lows.remove(rankingOfStack);
-               stackRankingIter.remove();
-               // stackRankings.remove(rankingOfStack);
+            final Iterator<Entry<Stack, Map<Stack, Double>>> stackRankingIter = stackRankings.entrySet().iterator();
+            while(stackRankingIter.hasNext()) {
+               final Entry<Stack, Map<Stack, Double>> targetsToSources = stackRankingIter.next();
+               final Stack rankingOfStack = targetsToSources.getKey();
+               if(targetsToSources.getValue().isEmpty()) {
+                  lows.remove(rankingOfStack);
+                  stackRankingIter.remove();
+                  // stackRankings.remove(rankingOfStack);
+                  continue;
+               }
+
+               final Entry<Stack, Double> maxPotentialEntry = targetsToSources.getValue().entrySet().stream()
+                     .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get();
+
+               if(maxPotentialEntry.getValue() >= maxPotential) {
+                  maxPotential = maxPotentialEntry.getValue();
+                  selectedTargetStack = rankingOfStack;
+                  maxPotentialStack = maxPotentialEntry.getKey();
+               }
+            }
+
+            if(maxPotentialStack == null) {
                continue;
             }
 
-            final Entry<Stack, Double> maxPotentialEntry = targetsToSources.getValue().entrySet().stream()
-                  .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get();
+            // System.out.println("Now shifting from load " + selectedTargetStack.getLoad());
 
-            if(maxPotentialEntry.getValue() >= maxPotential) {
-               maxPotential = maxPotentialEntry.getValue();
-               selectedTargetStack = rankingOfStack;
-               maxPotentialStack = maxPotentialEntry.getKey();
+            final int sendLoad = (int) Math.min(maxPotentialStack.getLoad() - mean,
+                  mean - selectedTargetStack.getLoad());
+
+            final boolean doShiftRight = this.isRightShortestPath(sm.getStacks().indexOf(maxPotentialStack),
+                  sm.getStacks().indexOf(selectedTargetStack), noStacks);
+            final String shiftRule = doShiftRight ? "shiftRight" : "shiftLeft";
+
+            Stack toStack = getNN(maxPotentialStack, doShiftRight);
+            Stack fromStack = maxPotentialStack;
+            do {
+
+               final ITransformationVariable var = executor.execute(shiftRule, g,
+                     Map.of("fromId", fromStack.getId(), "toId", toStack.getId(), "amount", sendLoad));
+
+               curTransformationSeq.add(var);
+
+               toStack = getNN(toStack, doShiftRight);
+               fromStack = getNN(fromStack, doShiftRight);
+
+            } while(fromStack.getId().compareTo(selectedTargetStack.getId()) != 0
+                  && concatTrafoSeq.size() + curTransformationSeq.size() < maxSolutionLength);
+
+            lows.remove(selectedTargetStack);
+            stackRankings.remove(selectedTargetStack);
+
+            updateMapPostSelection(sm.getStacks(), maxPotentialStack, stackRankings, mean, std);
+
+            // transformationSeqs.add(curTransformationSeq);
+            concatTrafoSeq.addAll(curTransformationSeq);
+
+            if(concatTrafoSeq.size() == maxSolutionLength) {
+               break;
             }
          }
 
-         // System.out.println("Now shifting from load " + selectedTargetStack.getLoad());
-
-         final int sendLoad = (int) Math.min(maxPotentialStack.getLoad() - mean, mean - selectedTargetStack.getLoad());
-
-         final boolean doShiftRight = this.isRightShortestPath(sm.getStacks().indexOf(maxPotentialStack),
-               sm.getStacks().indexOf(selectedTargetStack), noStacks);
-         final String shiftRule = doShiftRight ? "shiftRight" : "shiftLeft";
-
-         Stack toStack = getNN(maxPotentialStack, doShiftRight);
-         Stack fromStack = maxPotentialStack;
-         do {
-
-            final ITransformationVariable var = executor.execute(shiftRule, g,
-                  Map.of("fromId", fromStack.getId(), "toId", toStack.getId(), "amount", sendLoad));
-
-            curTransformationSeq.add(var);
-
-            toStack = getNN(toStack, doShiftRight);
-            fromStack = getNN(fromStack, doShiftRight);
-
-         } while(fromStack.getId().compareTo(selectedTargetStack.getId()) != 0
-               && concatTrafoSeq.size() + curTransformationSeq.size() < maxSolutionLength);
-
-         lows.remove(selectedTargetStack);
-         stackRankings.remove(selectedTargetStack);
-
-         updateMapPostSelection(sm.getStacks(), maxPotentialStack, stackRankings, mean, std);
-
-         // transformationSeqs.add(curTransformationSeq);
-         concatTrafoSeq.addAll(curTransformationSeq);
+         System.out
+               .println("After changes: " + sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList()));
+         System.out.println("New std: " + MathUtil
+               .getStandardDeviation(sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList())));
+         System.out.println(String.format("Rel. Improvement to starting model in %%: %.3f",
+               100 - 100 * MathUtil
+                     .getStandardDeviation(sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList()))
+                     / initialStd));
+         ;
+         System.out.println("Plansize: " + concatTrafoSeq.size() + "\n");
+         // }
       }
-
-      System.out.println("Loads: " + sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList()));
-      System.out.println("New std: " + MathUtil
-            .getStandardDeviation(sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList())));
-      System.out.println(String.format("Rel. Improvement to starting model: %.3f", 100
-            * MathUtil.getStandardDeviation(sm.getStacks().stream().map(s -> s.getLoad()).collect(Collectors.toList()))
-            / initialStd));
-      ;
-      System.out.println("Plansize: " + concatTrafoSeq.size());
-      // }
-
       // transformationSeqs.addAll(Stream.generate(() -> new ArrayList<>(concatTrafoSeq))
       // .limit((long) (populationSize * 0.2)).collect(Collectors.toList()));
 

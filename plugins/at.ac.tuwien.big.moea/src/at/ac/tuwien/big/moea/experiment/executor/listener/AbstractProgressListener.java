@@ -21,7 +21,17 @@ import org.moeaframework.util.progress.ProgressListener;
 public abstract class AbstractProgressListener implements ProgressListener {
    protected static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("[HH:mm:ss.SSS] ");
 
+   protected String experimentName;
+   protected int runNr;
    private int currentSeed = 0;
+
+   public String getExperimentName() {
+      return experimentName;
+   }
+
+   public int getRunNr() {
+      return runNr;
+   }
 
    public boolean isFinished(final ProgressEvent event) {
       return event.getCurrentSeed() > event.getTotalSeeds();
@@ -54,6 +64,15 @@ public abstract class AbstractProgressListener implements ProgressListener {
       if(isFinished(event)) {
          currentSeed = 0;
       }
+   }
+
+   public void setExperimentName(final String experimentName) {
+      this.experimentName = experimentName;
+   }
+
+   public void setup(final int runNr, final String expName) {
+      this.runNr = runNr;
+      this.experimentName = expName;
    }
 
    public abstract void update(ProgressEvent event);

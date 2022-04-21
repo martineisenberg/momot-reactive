@@ -15,7 +15,9 @@ package at.ac.tuwien.big.momot.util;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
 import at.ac.tuwien.big.moea.util.CastUtil;
 import at.ac.tuwien.big.momot.problem.solution.TransformationSolution;
+import at.ac.tuwien.big.momot.problem.solution.variable.ITransformationVariable;
 import at.ac.tuwien.big.momot.search.algorithm.reinforcement.algorithm.RLUtils;
+import at.ac.tuwien.big.momot.search.fitness.IEGraphMultiDimensionalFitnessFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,17 @@ public final class MomotUtil {
 
    public static TransformationSolution asTransformationSolution(final Solution solution) {
       return CastUtil.asClass(solution, TransformationSolution.class);
+   }
+
+   public static double calculateObjectiveOnModel(final String objectiveName,
+         final IEGraphMultiDimensionalFitnessFunction f, final EGraph g,
+         final List<ITransformationVariable> executedVars) {
+
+      final TransformationSolution ts = new TransformationSolution(MomotUtil.copy(g), executedVars,
+            f.evaluatesNrObjectives());
+      f.evaluate(ts);
+      return ts.getObjective(f.getObjectiveIndex(objectiveName));
+
    }
 
    public static EGraph copy(final EGraph original) {

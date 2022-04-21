@@ -1,6 +1,8 @@
 package at.ac.tuwien.big.momot.examples.reactive;
 
+import at.ac.tuwien.big.moea.experiment.executor.listener.CurrentBestObjectiveListener;
 import at.ac.tuwien.big.moea.util.CSVUtil;
+import at.ac.tuwien.big.momot.domain.Heuristic;
 import at.ac.tuwien.big.momot.examples.stack.StackHeuristic;
 import at.ac.tuwien.big.momot.examples.stack.StackSearch;
 import at.ac.tuwien.big.momot.examples.stack.StackSolutionWriter;
@@ -8,17 +10,17 @@ import at.ac.tuwien.big.momot.examples.stack.stack.StackPackage;
 import at.ac.tuwien.big.momot.reactive.AbstractDisturber;
 import at.ac.tuwien.big.momot.reactive.Executor;
 import at.ac.tuwien.big.momot.reactive.IReactiveUtilities;
+import at.ac.tuwien.big.momot.reactive.Planner;
 import at.ac.tuwien.big.momot.reactive.Printer;
 import at.ac.tuwien.big.momot.reactive.ReactiveExperiment;
 import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.ConditionReplanningStrategy;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.Planning;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.SearchReplanningStrategy.PredictiveReplanningType;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.ReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult.PredictiveRunPlanningStats;
 import at.ac.tuwien.big.momot.reactive.result.ReactiveExperimentResult;
-import at.ac.tuwien.big.momot.search.criterion.MinimumObjectiveCondition;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
 import com.google.common.collect.ImmutableList;
@@ -46,9 +48,9 @@ import org.eclipse.emf.henshin.model.resource.HenshinResourceSet;
 public class ReactivePlanningSuite {
    // final static double OBJ_THRESHOLD = 20;
 
-   final static double OBJ_THRESHOLD = 15.0;
-   // final static double OBJ_THRESHOLD = 1.0;
-
+   // final static double OBJ_THRESHOLD = .0;
+   final static double OBJ_THRESHOLD = 13.6795;
+   // final static double OBJ_THRESHOLD = 25;
    // final static double OBJ_THRESHOLD = 1.5905;
 
    final static int OBJ_INDEX = 0; // standard deviation for stack problem
@@ -57,17 +59,32 @@ public class ReactivePlanningSuite {
 
    /* EXPERIMENT CONFIGURATION */
 
+   final static Heuristic h = StackHeuristic.getInstance();
    // ----------- Planning Cases ------------ //
-   final static List<PlanningStrategy> PLANNING_STRATEGIES = Arrays.asList(
+   final static List<Planning> PLANNING_STRATEGIES = Arrays.asList(
+         //
+         // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+         // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+         // .castAsReplanningStrategy()
+         // .withPredictivePlanning(PredictiveReplanningStrategy
+         // .create("NSGAII", 1, List.of(2, 5, 10),
+         // PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
+         // .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy())));
 
-         PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
-               StackHeuristic.getInstance(), .1,
-               ConditionReplanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds))
-                     .withHeuristic(StackHeuristic.getInstance(), .1).withPlanReuse(.1)
-                     .withPredictivePlanning(PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED,
-                           List.of(2, 5, 10), "NSGAII", StackHeuristic.getInstance(), .1))
+         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+                     .castAsReplanningStrategy()),
+         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+                     .castAsReplanningStrategy().withReseedingInitialization(.1)));
 
-   );
+   //
+   // PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
+   // StackHeuristic.getInstance(), .1,
+   // ConditionReplanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds))
+   // .withHeuristic(StackHeuristic.getInstance(), .1).withPlanReuse(.1)
+   // .withPredictivePlanning(PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED,
+   // List.of(2, 5, 10), "NSGAII", StackHeuristic.getInstance(), .1))
 
    // PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
    // ConditionReplanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds))
@@ -85,31 +102,32 @@ public class ReactivePlanningSuite {
    // final static String INITIAL_MODEL = Paths.get("model", "model_ten_stacks.xmi").toString();
 
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
-   final static int MAX_SOLUTION_LENGTH = 150;
+   final static int MAX_SOLUTION_LENGTH = 200;
    final static int POPULATION_SIZE = 100;
-   private static final int EXPERIMENT_RUNS = 1;
+   private static final int EXPERIMENT_RUNS = 10;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
    final static String OBJECTIVE_SELECTION_NAME = "SolutionLength";
 
    /* DISTURBER CONFIGURATION */
-   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.ADD_STACKS);
-   private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT,
-         ErrorOccurence.MIDDLE_10_PERCENT, ErrorOccurence.LAST_10_PERCENT);
+   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.REMOVE_STACKS);
+   private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT);
    final static int ERRORS_PER_DISTURBANCE = 5;
 
    /* OUTPUTS */
    final static boolean VERBOSE = false;
+   final static boolean RECORD_OBJECTIVE_DEVELOPMENT = false;
+
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
    // final static String PRINT_FILENAME = "50stacks_1to100_threshold_10.9436_predictive";
-   final static String PRINT_FILENAME = "test123";
+   final static String PRINT_FILENAME = "50stacks_1to100_threshold_decreasepathsize2";
 
    // final static String PRINT_FILENAME = "test";
 
-   // final static Printer PS_OUT = new Printer(Paths.get(PRINT_DIR, PRINT_FILENAME + ".txt").toString(),
-   // new StackSolutionWriter(new StackUtils().getFitnessFunction()));
-   final static boolean PRINT_RESULTS_TO_CSV = true;
-   final static Printer PS_OUT = new Printer(System.out,
+   final static Printer PS_OUT = new Printer(Paths.get(PRINT_DIR, PRINT_FILENAME + ".txt").toString(),
          new StackSolutionWriter(new StackUtils().getFitnessFunction()));
+   final static boolean PRINT_RESULTS_TO_CSV = true;
+   // final static Printer PS_OUT = new Printer(System.out,
+   // new StackSolutionWriter(new StackUtils().getFitnessFunction()));
 
    private static <T> double getAverageOverLastElementsOfSubLists(final List<List<T>> allRunsList) {
       double avgRuntime = 0;
@@ -149,10 +167,16 @@ public class ReactivePlanningSuite {
                .occurence(eOccurence).maxNrOfDisturbances(1).errorsPerDisturbance(ERRORS_PER_DISTURBANCE).build();
 
          final Executor executor = new Executor(HENSHIN_MODULE);
+         final Planner planner = new Planner(new StackSearch(), EVAL_OBJECTIVE, PS_OUT, utils);
+
+         if(RECORD_OBJECTIVE_DEVELOPMENT) {
+            final String outObjDevPath = Paths.get(PRINT_DIR, "listeners", "best_objectives").toString();
+            planner.addEventListener(new CurrentBestObjectiveListener(outObjDevPath, OBJ_INDEX, POPULATION_SIZE));
+         }
 
          final ReactiveExperiment experiment = new ReactiveExperiment(MomotUtil.eGraphOf(initialModelRes, true),
-               PLANNING_STRATEGIES, new StackSearch(), utils, disturber, executor, EVAL_OBJECTIVE,
-               OBJECTIVE_SELECTION_NAME, EXPERIMENT_RUNS, MAX_SOLUTION_LENGTH, POPULATION_SIZE, p, VERBOSE);
+               PLANNING_STRATEGIES, utils, planner, disturber, executor, EVAL_OBJECTIVE, OBJECTIVE_SELECTION_NAME,
+               EXPERIMENT_RUNS, MAX_SOLUTION_LENGTH, POPULATION_SIZE, p, VERBOSE);
 
          p.header1(String.format("Experiment %s, %s", eType, eOccurence));
 

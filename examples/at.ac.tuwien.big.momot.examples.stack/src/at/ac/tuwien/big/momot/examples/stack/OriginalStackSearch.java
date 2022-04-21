@@ -8,42 +8,42 @@ import at.ac.tuwien.big.moea.experiment.executor.SearchExecutor;
 import at.ac.tuwien.big.moea.experiment.executor.listener.SeedRuntimePrintListener;
 import at.ac.tuwien.big.moea.search.algorithm.EvolutionaryAlgorithmFactory;
 import at.ac.tuwien.big.momot.TransformationResultManager;
-import at.ac.tuwien.big.momot.domain.Heuristic;
 import at.ac.tuwien.big.momot.examples.stack.stack.StackPackage;
 import at.ac.tuwien.big.momot.problem.solution.TransformationSolution;
-import at.ac.tuwien.big.momot.problem.solution.variable.ITransformationVariable;
-import at.ac.tuwien.big.momot.problem.solution.variable.TransformationPlaceholderVariable;
-import at.ac.tuwien.big.momot.reactive.Executor;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationParameterMutation;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationPlaceholderMutation;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationVariableMutation;
-import at.ac.tuwien.big.momot.util.MomotUtil;
+import at.ac.tuwien.big.momot.search.criterion.MinimumObjectiveCondition;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.eclipse.emf.henshin.interpreter.EGraph;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Population;
+import org.moeaframework.core.TerminationCondition;
 import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 
 public class OriginalStackSearch {
-   private static final int SOLUTION_LENGTH = 150;
+   final static double OBJ_THRESHOLD = 13.6795;
+
+   final static int OBJ_INDEX = 0; // standard deviation for stack problem
+
+   final static Map<Integer, Double> objectiveThresholds = Map.of(OBJ_INDEX, OBJ_THRESHOLD);
+   private static final int SOLUTION_LENGTH = 200;
    private static final int POPULATION_SIZE = 100;
-   private static final int MAX_EVALUATIONS = 20000;
+   private static final int MAX_EVALUATIONS = 0;
+   private static final TerminationCondition condition = MinimumObjectiveCondition.create(objectiveThresholds);
 
    private static final String INPUT_MODEL = "model/model_fifty_stacks_std50_2500_27.359.xmi";
    // private static final String INPUT_MODEL = "comparison_11-4-2-5-0-19-12-14-7-2.xmi";
 
    // private static final String REFERENCE_SET = "model/input/referenceSet/model_five_stacks_reference_set.pf";
-   private static final int NR_RUNS = 7;
+   private static final int NR_RUNS = 10;
 
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
 
@@ -91,20 +91,20 @@ public class OriginalStackSearch {
       // "model/model_five_stacks.xmi", "model/model_ten_stacks.xmi", "model/model_twentyfive_stacks.xmi",
       // "model/model_twentyfive_stacks_1_to_30.xmi")) {
       // ;
-
-      final EGraph g = MomotUtil.copy(MomotUtil.loadGraph(INPUT_MODEL));
-      final Heuristic h = new StackHeuristic();
-      final Executor executor = new Executor(HENSHIN_MODULE);
+      //
+      // final EGraph g = MomotUtil.copy(MomotUtil.loadGraph(INPUT_MODEL));
+      // final Heuristic h = StackHeuristic.getInstance();
+      // final Executor executor = new Executor(HENSHIN_MODULE);
       //
       // final AbstractDisturber disturber = new RangeDisturber.RangeDisturberBuilder().type(ErrorType.ADD_STACKS)
       // .occurence(ErrorOccurence.FIRST_10_PERCENT).maxNrOfDisturbances(1).errorsPerDisturbance(5).build();
-
+      //
       // final ModelRuntimeEnvironment mre = new ModelRuntimeEnvironment(g);
       // disturber.setModelRuntimeEnvironment(mre);
       // disturber.disturb();
-
-      final List<ITransformationVariable> reinitSeed = h.getInitialPopulationTs(g, executor, solutionLength);
-      // }
+      //
+      // final List<ITransformationVariable> reinitSeed = h.getInitialPopulationTs(g, executor, SOLUTION_LENGTH);
+      // // }
 
       // 1. 1 solution
       final StackOrchestration search = new StackOrchestration(INPUT_MODEL, SOLUTION_LENGTH);
@@ -112,15 +112,15 @@ public class OriginalStackSearch {
       final EvolutionaryAlgorithmFactory<TransformationSolution> moea = search
             .createEvolutionaryAlgorithmFactory(POPULATION_SIZE);
 
-      final List<ITransformationVariable> paddedSeq = new ArrayList<>(
-            reinitSeed.subList(0, Math.min(reinitSeed.size(), SOLUTION_LENGTH)));
-      if(reinitSeed.size() < SOLUTION_LENGTH) {
-         paddedSeq.addAll(Stream.generate(TransformationPlaceholderVariable::new)
-               .limit(SOLUTION_LENGTH - reinitSeed.size()).collect(Collectors.toList()));
-      }
-
-      final TransformationSolution singleSolution = new TransformationSolution(MomotUtil.copy(g),
-            new ArrayList<>(paddedSeq), search.getFitnessFunction().evaluatesNrObjectives());
+      // final List<ITransformationVariable> paddedSeq = new ArrayList<>(
+      // reinitSeed.subList(0, Math.min(reinitSeed.size(), SOLUTION_LENGTH)));
+      // if(reinitSeed.size() < SOLUTION_LENGTH) {
+      // paddedSeq.addAll(Stream.generate(TransformationPlaceholderVariable::new)
+      // .limit(SOLUTION_LENGTH - reinitSeed.size()).collect(Collectors.toList()));
+      // }
+      //
+      // final TransformationSolution singleSolution = new TransformationSolution(MomotUtil.copy(g),
+      // new ArrayList<>(paddedSeq), search.getFitnessFunction().evaluatesNrObjectives());
       // moea.setInitialSolutions(List.of(singleSolution));
 
       // search.addAlgorithm("NSGA-II_2_1_.25_.1_sol1",
@@ -149,45 +149,87 @@ public class OriginalStackSearch {
 
       // ## BEST ##!
 
-      search.addAlgorithm("NSGA-II_2_1_.1_.25_.1_sol10_1",
-            moea.createNSGAII(
-                  Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
-                        search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
-                  new TournamentSelection(2),
-                  // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
-                  new OnePointCrossover(1.0), new TransformationParameterMutation(0.25, search.getModuleManager()),
-                  new TransformationVariableMutation(search.getSearchHelper(), 0.1),
-                  new TransformationPlaceholderMutation(0.1)));
+      // search.addAlgorithm("NSGA-II_1",
+      // moea.createNSGAII(
+      // Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
+      // search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
+      // new TournamentSelection(2),
+      // // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+      // new OnePointCrossover(1.0), new TransformationParameterMutation(0.1, search.getModuleManager()),
+      // new TransformationVariableMutation(search.getSearchHelper(), 0.1),
+      // new TransformationPlaceholderMutation(0.1)));
+      //
+      // search.addAlgorithm("NSGA-II_2",
+      // moea.createNSGAII(
+      // Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
+      // search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
+      // new TournamentSelection(2),
+      // // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+      // new OnePointCrossover(1.0), new TransformationParameterMutation(0.2, search.getModuleManager()),
+      // new TransformationVariableMutation(search.getSearchHelper(), 0.2),
+      // new TransformationPlaceholderMutation(0.2)));
+      //
+      // search.addAlgorithm("NSGA-II_3",
+      // moea.createNSGAII(
+      // Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
+      // search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
+      // new TournamentSelection(2),
+      // // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+      // new OnePointCrossover(1.0), new TransformationParameterMutation(0.3, search.getModuleManager()),
+      // new TransformationVariableMutation(search.getSearchHelper(), 0.3),
+      // new TransformationPlaceholderMutation(0.3)));
+      //
+      // search.addAlgorithm("NSGA-II_4",
+      // moea.createNSGAII(
+      // Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
+      // search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
+      // new TournamentSelection(2),
+      // // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+      // new OnePointCrossover(1.0), new TransformationParameterMutation(0.4, search.getModuleManager()),
+      // new TransformationVariableMutation(search.getSearchHelper(), 0.4),
+      // new TransformationPlaceholderMutation(0.4)));
+      //
+      // search.addAlgorithm("NSGA-II_5",
+      // moea.createNSGAII(
+      // Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
+      // search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
+      // new TournamentSelection(2),
+      // // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+      // new OnePointCrossover(1.0), new TransformationParameterMutation(0.5, search.getModuleManager()),
+      // new TransformationVariableMutation(search.getSearchHelper(), 0.5),
+      // new TransformationPlaceholderMutation(0.5)));
 
-      search.addAlgorithm("NSGA-II_2_1_.1_.25_.1_sol10_2",
-            moea.createNSGAII(
-                  Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
-                        search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
-                  new TournamentSelection(2),
-                  // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
-                  new OnePointCrossover(1.0), new TransformationParameterMutation(0.1, search.getModuleManager()),
-                  new TransformationVariableMutation(search.getSearchHelper(), 0.25),
-                  new TransformationPlaceholderMutation(0.1)));
+      search.addAlgorithm("NSGA-II_1", moea.createNSGAII(
 
-      search.addAlgorithm("NSGA-II_2_1_.1_.25_.1_sol10_3",
-            moea.createNSGAII(
-                  Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
-                        search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
-                  new TournamentSelection(2),
-                  // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
-                  new OnePointCrossover(1.0), new TransformationParameterMutation(0.2, search.getModuleManager()),
-                  new TransformationVariableMutation(search.getSearchHelper(), 0.25),
-                  new TransformationPlaceholderMutation(0.2)));
+            new TournamentSelection(2),
+            // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+            new OnePointCrossover(1.0), new TransformationParameterMutation(0.05, search.getModuleManager()),
+            new TransformationVariableMutation(search.getSearchHelper(), 0.05),
+            new TransformationPlaceholderMutation(0.05)));
 
-      search.addAlgorithm("NSGA-II_2_1_.1_.25_.1_sol10_4",
-            moea.createNSGAII(
-                  Stream.generate(() -> new TransformationSolution(MomotUtil.copy(g), new ArrayList<>(paddedSeq),
-                        search.getFitnessFunction().evaluatesNrObjectives())).limit(10).collect(Collectors.toList()),
-                  new TournamentSelection(2),
-                  // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
-                  new OnePointCrossover(1.0), new TransformationParameterMutation(0.2, search.getModuleManager()),
-                  new TransformationVariableMutation(search.getSearchHelper(), 0.1),
-                  new TransformationPlaceholderMutation(0.1)));
+      search.addAlgorithm("NSGA-II_2", moea.createNSGAII(
+
+            new TournamentSelection(2),
+            // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+            new OnePointCrossover(1.0), new TransformationParameterMutation(0.1, search.getModuleManager()),
+            new TransformationVariableMutation(search.getSearchHelper(), 0.1),
+            new TransformationPlaceholderMutation(0.1)));
+
+      search.addAlgorithm("NSGA-II_3", moea.createNSGAII(
+
+            new TournamentSelection(2),
+            // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+            new OnePointCrossover(1.0), new TransformationParameterMutation(0.2, search.getModuleManager()),
+            new TransformationVariableMutation(search.getSearchHelper(), 0.2),
+            new TransformationPlaceholderMutation(0.2)));
+
+      search.addAlgorithm("NSGA-II_4", moea.createNSGAII(
+
+            new TournamentSelection(2),
+            // new RetiringSolutionVariation(orchestration.getSearchHelper(), 50, populationSize, 90),
+            new OnePointCrossover(1.0), new TransformationParameterMutation(0.25, search.getModuleManager()),
+            new TransformationVariableMutation(search.getSearchHelper(), 0.25),
+            new TransformationPlaceholderMutation(0.25)));
       // TransformationSolution[] solutionArr = new TransformationSolution[POPULATION_SIZE];
       //
       // for(int i = 0; i < solutionArr.length; i++) {
@@ -269,7 +311,8 @@ public class OriginalStackSearch {
       // // algorithms
       //
       // experiment
-      final SearchExperiment<TransformationSolution> experiment = new SearchExperiment<>(search, MAX_EVALUATIONS);
+      final SearchExperiment<TransformationSolution> experiment = new SearchExperiment<>(search, MAX_EVALUATIONS,
+            condition);
       // experiment.setReferenceSetFile(REFERENCE_SET);
       experiment.setNumberOfRuns(NR_RUNS);
       experiment.addProgressListener(new SeedRuntimePrintListener());

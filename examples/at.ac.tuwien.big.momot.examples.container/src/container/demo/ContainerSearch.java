@@ -14,7 +14,7 @@ import at.ac.tuwien.big.moea.search.fitness.dimension.IFitnessDimension;
 import at.ac.tuwien.big.momot.ModuleManager;
 import at.ac.tuwien.big.momot.TransformationSearchOrchestration;
 import at.ac.tuwien.big.momot.problem.solution.TransformationSolution;
-import at.ac.tuwien.big.momot.reactive.IReactiveSearch;
+import at.ac.tuwien.big.momot.reactive.IReactiveSearchInstance;
 import at.ac.tuwien.big.momot.reactive.result.SearchResult;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationParameterMutation;
 import at.ac.tuwien.big.momot.search.algorithm.operator.mutation.TransformationPlaceholderMutation;
@@ -44,7 +44,7 @@ import container.ContainerModel;
 import container.ContainerPackage;
 
 @SuppressWarnings("all")
-public class ContainerSearch implements IReactiveSearch {
+public class ContainerSearch implements IReactiveSearchInstance {
    protected static final String INITIAL_MODEL = "model/3S_8C.xmi";
 
    protected static final boolean PRINT_POPULATIONS = false;

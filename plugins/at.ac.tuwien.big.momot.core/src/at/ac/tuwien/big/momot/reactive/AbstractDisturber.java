@@ -10,6 +10,9 @@ import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.eclipse.emf.ecore.EClass;
@@ -17,6 +20,7 @@ import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.henshin.interpreter.EGraph;
+import org.moeaframework.core.PRNG;
 
 public abstract class AbstractDisturber {
 
@@ -86,42 +90,55 @@ public abstract class AbstractDisturber {
       this.errorsPerDisturbance = builder.errorsPerDisturbance;
    }
 
-   public StackModel addStack(final EGraph g) {
+   public void addStack(final EGraph g, final int num) {
       final StackModel sm = MomotUtil.getRoot(g, StackModel.class);
 
-      final EClassifier sClassifier = StackPackage.eINSTANCE.getEClassifier("Stack");
+      final List<Stack> stacks = sm.getStacks();
+      final List<Integer> addIndices = new ArrayList<>();
+      for(int i = 0; i < stacks.size(); i += stacks.size() / num) {
+         addIndices.add(PRNG.nextInt(i, i + stacks.size() / num - 1));
+      }
 
-      final Stack stack = (Stack) EcoreUtil.create((EClass) sClassifier);
+      Collections.sort(addIndices, Collections.reverseOrder());
+      int addedStacks = 1;
+      for(final int addIndex : addIndices) {
 
-      stack.setId(String.format("Stack_%d", sm.getStacks().size() + 1));
-      stack.setLoad(0);
-      stack.setRight(sm.getStacks().get(0));
-      stack.setLeft(sm.getStacks().get(sm.getStacks().size() - 1));
-      sm.getStacks().get(sm.getStacks().size() - 1).setRight(stack);
-      sm.getStacks().get(0).setLeft(stack);
+         final EClassifier sClassifier = StackPackage.eINSTANCE.getEClassifier("Stack");
 
-      sm.getStacks().add(stack);
-      g.add(stack);
+         final Stack stack = (Stack) EcoreUtil.create((EClass) sClassifier);
+         stack.setId(String.format("Stack_I%d", addedStacks++));
+         stack.setLoad(0);
 
-      return sm;
+         final Stack leftN = stacks.get(addIndex);
+         final Stack rightN = leftN.getRight();
+
+         leftN.setRight(stack);
+         rightN.setLeft(stack);
+
+         stack.setRight(rightN);
+         stack.setLeft(leftN);
+
+         // sm.getStacks().add(stack);
+         stacks.add(addIndex + 1, stack);
+         g.add(stack);
+      }
 
    }
 
    public void disturb() {
-      for(int i = 0; i < this.errorsPerDisturbance; i++) {
 
-         switch(eType) {
-            case WEAK_ERROR:
+      switch(eType) {
+         case WEAK_ERROR:
 
-               break;
-            case REMOVE_STACKS:
-               removeStackToShiftFrom(mre.getGraph());
-               break;
-            case ADD_STACKS:
-               addStack(mre.getGraph());
-               break;
-         }
+            break;
+         case REMOVE_STACKS:
+            removeStackToShiftFrom(mre.getGraph(), this.errorsPerDisturbance);
+            break;
+         case ADD_STACKS:
+            addStack(mre.getGraph(), this.errorsPerDisturbance);
+            break;
       }
+
    }
 
    /**
@@ -139,30 +156,35 @@ public abstract class AbstractDisturber {
    public abstract Disturbance pollForDisturbance(final int curExecutionNr, final int plannedExecutions,
          final ITransformationVariable nextExecution);
 
-   protected void removeStackToShiftFrom(final EGraph graph) {
+   protected void removeStackToShiftFrom(final EGraph graph, final int num) {
       final StackModel sm = MomotUtil.getRoot(graph, StackModel.class);
+      final List<Stack> stacks = sm.getStacks();
+      final List<Integer> removeIndexes = new ArrayList<>();
+      for(int i = 0; i < stacks.size(); i += stacks.size() / num) {
+         removeIndexes.add(PRNG.nextInt(i, i + stacks.size() / num - 1));
+      }
 
-      // final String removeStackIdx = (String) nextStep.getResultParameterValue("fromId");
+      Collections.sort(removeIndexes, Collections.reverseOrder());
+      for(final int removeIndex : removeIndexes) {
+         final Stack removeStack = sm.getStacks().get(removeIndex);
+         final Stack r = removeStack.getRight();
+         final Stack l = removeStack.getLeft();
+         r.setLeft(l);
+         l.setRight(r);
 
-      final Stack removeStack = sm.getStacks().stream().findAny().get();
+         final EObject graphRemoveObj = graph.stream()
+               .filter(g -> g instanceof StackImpl && ((StackImpl) g).getId().compareTo(removeStack.getId()) == 0)
+               .findFirst().get();
 
-      final Stack r = removeStack.getRight();
-      final Stack l = removeStack.getLeft();
-      r.setLeft(l);
-      l.setRight(r);
-      // r.setRight(null);
-      // r.setLeft(null);
-
-      final EObject graphRemoveObj = graph.stream()
-            .filter(g -> g instanceof StackImpl && ((StackImpl) g).getId().compareTo(removeStack.getId()) == 0)
-            .findFirst().get();
-
-      sm.getStacks().remove(removeStack);
-      graph.remove(graphRemoveObj);
+         stacks.remove(removeStack);
+         graph.remove(graphRemoveObj);
+      }
+      // System.out.println(stacks.stream().map(s -> s.getLoad()).collect(Collectors.toList()));
+      // System.out.println(stacks.stream().map(s -> s.getId()).collect(Collectors.toList()));
    }
 
-   protected void reset() {
-      this.mre = null;
+   protected void reset(final ModelRuntimeEnvironment mre) {
+      this.mre = mre;
       this.nrOfObservedDisturbances = 0;
    }
 

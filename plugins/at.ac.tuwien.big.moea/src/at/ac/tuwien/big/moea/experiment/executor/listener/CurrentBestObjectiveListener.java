@@ -18,24 +18,25 @@ import org.moeaframework.util.progress.ProgressEvent;
 public class CurrentBestObjectiveListener extends AbstractProgressListener {
 
    private final String resultPath;
-   private final String experimentName;
-   private final int runNr;
+
    private final int printInterval;
    private List<String[]> dataLines;
    private int nfeCount = 0;
    private final int objectiveIndex;
+   private double priorBestObjValue;
 
-   public CurrentBestObjectiveListener(final String resultPath, final int objectiveIndex, final String experimentName,
-         final int runNr, final double reseedObj, final int printInterval) {
+   public CurrentBestObjectiveListener(final String resultPath, final int objectiveIndex, final int printInterval) {
       dataLines = new ArrayList<>();
 
-      dataLines.add(
-            new String[] { String.valueOf(runNr), String.valueOf(0), String.valueOf(0), String.valueOf(reseedObj) });
+      // dataLines.add(
+      // new String[] { String.valueOf(runNr), String.valueOf(0), String.valueOf(0), String.valueOf(reseedObj) });
       this.resultPath = resultPath;
-      this.experimentName = experimentName;
-      this.runNr = runNr;
       this.printInterval = printInterval;
       this.objectiveIndex = objectiveIndex;
+   }
+
+   public void setPriorBestObjValue(final double val) {
+      this.priorBestObjValue = val;
    }
 
    @Override
@@ -54,13 +55,14 @@ public class CurrentBestObjectiveListener extends AbstractProgressListener {
          }
 
          dataLines.add(new String[] { String.valueOf(runNr), String.valueOf(event.getElapsedTime()),
-               String.valueOf(currentNFE), String.valueOf(minObj) });
+               String.valueOf(currentNFE), String.valueOf(minObj / priorBestObjValue) });
 
       }
       if(event.isSeedFinished()) {
          nfeCount = 0;
 
          if(!Files.exists(Paths.get(resultPath, experimentName + ".csv"))) {
+            dataLines.add(0, new String[] { String.valueOf(runNr), "0", "0", "0" });
             dataLines.add(0, new String[] { "run", "seconds", "evaluations", "objective_value" });
          }
 

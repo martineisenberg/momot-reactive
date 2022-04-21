@@ -3,6 +3,7 @@ package at.ac.tuwien.big.momot.examples.reactive;
 import at.ac.tuwien.big.momot.problem.solution.variable.ITransformationVariable;
 import at.ac.tuwien.big.momot.reactive.AbstractDisturber;
 import at.ac.tuwien.big.momot.reactive.error.Disturbance;
+import at.ac.tuwien.big.momot.reactive.error.ErrorUtils;
 import at.ac.tuwien.big.momot.reactive.error.IRangeDisturber;
 
 public class RangeDisturber extends AbstractDisturber implements IRangeDisturber {
@@ -58,13 +59,8 @@ public class RangeDisturber extends AbstractDisturber implements IRangeDisturber
    }
 
    @Override
-   public void reset() {
-      super.reset();
-   }
-
-   @Override
-   public void setDisturbanceIndex(final int i) {
-      this.disturbanceIndex = i;
+   public void setup(final int planLength) {
+      this.disturbanceIndex = ErrorUtils.getIndexForErrorRange(eOccurence, planLength);
    }
 
    @Override
