@@ -1,0 +1,14 @@
+variant;run;idle_computed_objectives;predicted_steps;pred_plan_objectives;pred_plan_iter;pred_plan_runtime;runtime_obj_satisfied;max_runtime_if_obj_satisfied
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;0;"[13.565315248005765, 73.0]";2;"[14.000634906238279, 71.0]";5400;44.614951700000006;44.6106172;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;1;"[13.446997002865052, 55.0]";2;"[13.565460861874977, 71.0]";4800;35.2813383;35.2789297;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;2;"[13.089700031459095, 48.0]";2;"[13.439833920196676, 55.0]";4500;38.147088100000005;38.1445822;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;3;"[13.678134303503947, 53.0]";2;"[13.125980269095766, 33.0]";9100;60.5884809;60.5858702;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;4;"[12.170922644758342, 56.0]";2;"[13.38648664479811, 43.0]";6100;40.888154300000004;40.8855289;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;5;"[13.177684091853594, 61.0]";2;"[13.391797747635685, 49.0]";4100;37.013323500000006;37.0113198;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;6;"[13.661444350009083, 53.0]";2;"[13.398654806258872, 52.0]";6300;49.293354;49.2869723;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;7;"[14.682718488829723, 47.0]";2;"[13.272528018429645, 45.0]";5200;36.925986900000005;36.9221179;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;8;"[13.647339540848606, 50.0]";2;"[13.591863942524542, 39.0]";6100;40.850692900000006;40.8456878;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;9;"[13.413094762623244, 54.0]";2;"[13.498971154211057, 48.0]";5000;36.1270128;36.1170169;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;10;"[13.664877931722948, 50.0]";2;"[13.611106575962964, 67.0]";4700;40.706615400000004;40.6949603;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;11;"[13.479202086506787, 84.0]";2;"[13.3566462856512, 48.0]";5400;44.502923900000006;44.4970931;20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0;12;"[13.505481283218232, 50.0]";2;"[13.274797433994248, 44.0]";4300;60.3714682;60.3669496;20.0
