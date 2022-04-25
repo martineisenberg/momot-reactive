@@ -17,6 +17,8 @@ import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.Planning;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.PredictiveReplanningStrategy;
+import at.ac.tuwien.big.momot.reactive.planningstrategy.PredictiveReplanningStrategy.PredictiveReplanningType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.ReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult.PredictiveRunPlanningStats;
@@ -49,9 +51,9 @@ public class ReactivePlanningSuite {
    // final static double OBJ_THRESHOLD = 20;
 
    // final static double OBJ_THRESHOLD = .0;
-   final static double OBJ_THRESHOLD = 13.6795;
+   // final static double OBJ_THRESHOLD = 13.6795;
    // final static double OBJ_THRESHOLD = 25;
-   // final static double OBJ_THRESHOLD = 1.5905;
+   final static double OBJ_THRESHOLD = 1.5905;
 
    final static int OBJ_INDEX = 0; // standard deviation for stack problem
 
@@ -63,20 +65,27 @@ public class ReactivePlanningSuite {
    // ----------- Planning Cases ------------ //
    final static List<Planning> PLANNING_STRATEGIES = Arrays.asList(
          //
-         // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-         // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-         // .castAsReplanningStrategy()
-         // .withPredictivePlanning(PredictiveReplanningStrategy
-         // .create("NSGAII", 1, List.of(2, 5, 10),
-         // PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
-         // .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy())));
+         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+                     .castAsReplanningStrategy()
+                     .withPredictivePlanning(PredictiveReplanningStrategy
+                           .create("NSGAII", 1, List.of(2, 5, 10),
+                                 PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
+                           .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy())));
+   //
+   // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+   // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+   // .castAsReplanningStrategy()),
+   // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+   // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+   // .castAsReplanningStrategy().withReseedingInitialization(.1)));
 
-         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-                     .castAsReplanningStrategy()),
-         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-                     .castAsReplanningStrategy().withReseedingInitialization(.1)));
+   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000), ReplanningStrategy.naive()),
+   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
+   // ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()),
+   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
+   // ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()
+   // .withReseedingInitialization(.1)));
 
    //
    // PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
@@ -96,7 +105,7 @@ public class ReactivePlanningSuite {
    // PlanningStrategy.create("NSGAII", 10000, NaivePlanningStrategy.get()));
 
    // ----------- Model, Algorithm ------------ //
-   final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std50_2500_27.359.xmi").toString();
+   final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std5_250_3.181.xmi").toString();
    // final static String INITIAL_MODEL = Paths.get("model", "gen100_1to100.xmi").toString();
 
    // final static String INITIAL_MODEL = Paths.get("model", "model_ten_stacks.xmi").toString();
@@ -104,22 +113,25 @@ public class ReactivePlanningSuite {
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
    final static int MAX_SOLUTION_LENGTH = 200;
    final static int POPULATION_SIZE = 100;
-   private static final int EXPERIMENT_RUNS = 10;
+   private static final int EXPERIMENT_RUNS = 30;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
    final static String OBJECTIVE_SELECTION_NAME = "SolutionLength";
 
    /* DISTURBER CONFIGURATION */
-   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.REMOVE_STACKS);
-   private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT);
+   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.ADD_STACKS,
+         ErrorType.REMOVE_STACKS);
+   private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT,
+         ErrorOccurence.MIDDLE_10_PERCENT, ErrorOccurence.LAST_10_PERCENT);
    final static int ERRORS_PER_DISTURBANCE = 5;
 
    /* OUTPUTS */
    final static boolean VERBOSE = false;
    final static boolean RECORD_OBJECTIVE_DEVELOPMENT = false;
+   final static boolean RECORD_GENERATIONAL_EXECUTION_TIME = false;
 
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
    // final static String PRINT_FILENAME = "50stacks_1to100_threshold_10.9436_predictive";
-   final static String PRINT_FILENAME = "50stacks_1to100_threshold_decreasepathsize2";
+   final static String PRINT_FILENAME = "50stacks_1to10_steps2_5_10";
 
    // final static String PRINT_FILENAME = "test";
 
@@ -170,8 +182,12 @@ public class ReactivePlanningSuite {
          final Planner planner = new Planner(new StackSearch(), EVAL_OBJECTIVE, PS_OUT, utils);
 
          if(RECORD_OBJECTIVE_DEVELOPMENT) {
+            planner.addEventListener(new CurrentBestObjectiveListener(OBJ_INDEX, POPULATION_SIZE));
+         }
+
+         if(RECORD_GENERATIONAL_EXECUTION_TIME) {
             final String outObjDevPath = Paths.get(PRINT_DIR, "listeners", "best_objectives").toString();
-            planner.addEventListener(new CurrentBestObjectiveListener(outObjDevPath, OBJ_INDEX, POPULATION_SIZE));
+            planner.addEventListener(new GenerationExecutionTimeListener(OBJ_INDEX, POPULATION_SIZE));
          }
 
          final ReactiveExperiment experiment = new ReactiveExperiment(MomotUtil.eGraphOf(initialModelRes, true),
@@ -180,7 +196,9 @@ public class ReactivePlanningSuite {
 
          p.header1(String.format("Experiment %s, %s", eType, eOccurence));
 
-         final Map<String, ReactiveExperimentResult> results = experiment.runExperiment();
+         final String listenerOutPath = Paths.get(PRINT_DIR, "listeners", PRINT_FILENAME + "_" + disturber.toString())
+               .toString();
+         final Map<String, ReactiveExperimentResult> results = experiment.runExperiment(listenerOutPath);
 
          p.header2(String.format("RESULTS (%s, %s)", eType, eOccurence));
 

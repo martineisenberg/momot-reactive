@@ -25,6 +25,12 @@ public class ApplicationState implements Serializable {
       this.paramValues = new HashMap<>();
    }
 
+   public ApplicationState(final Unit unit, final Map<String, Object> paramValues) {
+      this.unit = unit;
+      this.unitName = unit.getName();
+      this.paramValues = paramValues;
+   }
+
    public ApplicationState(final Unit unit, final Map<String, Object> paramValues,
          final List<RuleApplication> appliedRules) {
       this.unit = unit;

@@ -22,11 +22,17 @@ public abstract class AbstractProgressListener implements ProgressListener {
    protected static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("[HH:mm:ss.SSS] ");
 
    protected String experimentName;
+   protected String listenerDir;
+
    protected int runNr;
    private int currentSeed = 0;
 
    public String getExperimentName() {
       return experimentName;
+   }
+
+   public String getListenerDir() {
+      return listenerDir;
    }
 
    public int getRunNr() {
@@ -70,7 +76,12 @@ public abstract class AbstractProgressListener implements ProgressListener {
       this.experimentName = experimentName;
    }
 
-   public void setup(final int runNr, final String expName) {
+   public void setListenerDir(final String listenerDir) {
+      this.listenerDir = listenerDir;
+   }
+
+   public void setup(final String listenerDir, final int runNr, final String expName) {
+      this.listenerDir = listenerDir;
       this.runNr = runNr;
       this.experimentName = expName;
    }

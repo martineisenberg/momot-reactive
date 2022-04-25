@@ -403,7 +403,7 @@ public class ReactiveExperiment {
       return runResult;
    }
 
-   public Map<String, ReactiveExperimentResult> runExperiment() {
+   public Map<String, ReactiveExperimentResult> runExperiment(final String listenerBase) {
 
       final Map<String, ReactiveExperimentResult> resultPerExperiment = new HashMap<>();
 
@@ -418,7 +418,7 @@ public class ReactiveExperiment {
                   String.format("%s (Strategy: %s) -> run %d/%d",
                         planning.getPlanningStrategy().getInitialSearchAlgorithm(), planning.getReplanningStrategy(),
                         j + 1, nr_runs));
-            planner.setupEventListeners(expName, experimentId);
+            planner.setupEventListeners(listenerBase, expName, experimentId);
 
             final ReactiveRunResult reactiveRunRes = run(MomotUtil.copy(initialGraph), planning);
             experimentStats.addRunResult(reactiveRunRes);

@@ -222,9 +222,9 @@ public class Planner {
       return prr;
    }
 
-   public void setupEventListeners(final String experimentName, final int runId) {
+   public void setupEventListeners(final String listenerDir, final String experimentName, final int runId) {
       for(final AbstractProgressListener apl : eventListeners) {
-         apl.setup(runId, experimentName);
+         apl.setup(listenerDir, runId, experimentName);
       }
    }
 

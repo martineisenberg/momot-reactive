@@ -4,6 +4,7 @@ import at.ac.tuwien.big.moea.SearchExperiment;
 import at.ac.tuwien.big.moea.SearchResultManager;
 import at.ac.tuwien.big.moea.experiment.executor.SearchExecutor;
 import at.ac.tuwien.big.moea.experiment.executor.listener.AbstractProgressListener;
+import at.ac.tuwien.big.moea.experiment.executor.listener.SeedreuseProportionListener;
 import at.ac.tuwien.big.moea.experiment.executor.listener.SingleSeedPrintListener;
 import at.ac.tuwien.big.moea.print.ISolutionWriter;
 import at.ac.tuwien.big.moea.search.algorithm.EvolutionaryAlgorithmFactory;
@@ -182,7 +183,8 @@ public class StackSearch implements IReactiveSearchInstance {
 
    protected SearchExperiment<TransformationSolution> createExperiment(
          final TransformationSearchOrchestration orchestration, final int evaluations,
-         final TerminationCondition terminationCondition, final List<AbstractProgressListener> listeners) {
+         final TerminationCondition terminationCondition, final List<AbstractProgressListener> listeners,
+         final List<List<ITransformationVariable>> initialPopulation) {
       final SearchExperiment<TransformationSolution> experiment = new SearchExperiment<>(orchestration, evaluations,
             terminationCondition);
       experiment.setNumberOfRuns(NR_RUNS);
@@ -190,6 +192,9 @@ public class StackSearch implements IReactiveSearchInstance {
       experiment.addCustomCollector(new ElapsedTimeCollector());
 
       for(final AbstractProgressListener l : listeners) {
+         if(l instanceof SeedreuseProportionListener) {
+            ((SeedreuseProportionListener) l).setSeedSolution(initialPopulation.get(0));
+         }
          experiment.addProgressListener(l);
       }
 
@@ -471,7 +476,7 @@ public class StackSearch implements IReactiveSearchInstance {
 
       // printSearchInfo(orchestration);
       final SearchExperiment<TransformationSolution> experiment = createExperiment(orchestration,
-            conf.getMaxEvaluations(), conf.getTerminationCondition(), listeners);
+            conf.getMaxEvaluations(), conf.getTerminationCondition(), listeners, conf.getInitialPopulation());
       experiment.run();
 
       SOLUTION_WRITER = experiment.getSearchOrchestration().createSolutionWriter();

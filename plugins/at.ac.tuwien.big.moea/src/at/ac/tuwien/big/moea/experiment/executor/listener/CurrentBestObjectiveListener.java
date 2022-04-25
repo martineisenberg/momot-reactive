@@ -17,20 +17,17 @@ import org.moeaframework.util.progress.ProgressEvent;
 
 public class CurrentBestObjectiveListener extends AbstractProgressListener {
 
-   private final String resultPath;
-
    private final int printInterval;
    private List<String[]> dataLines;
    private int nfeCount = 0;
    private final int objectiveIndex;
    private double priorBestObjValue;
 
-   public CurrentBestObjectiveListener(final String resultPath, final int objectiveIndex, final int printInterval) {
+   public CurrentBestObjectiveListener(final int objectiveIndex, final int printInterval) {
       dataLines = new ArrayList<>();
 
       // dataLines.add(
       // new String[] { String.valueOf(runNr), String.valueOf(0), String.valueOf(0), String.valueOf(reseedObj) });
-      this.resultPath = resultPath;
       this.printInterval = printInterval;
       this.objectiveIndex = objectiveIndex;
    }
@@ -41,6 +38,10 @@ public class CurrentBestObjectiveListener extends AbstractProgressListener {
 
    @Override
    public void update(final ProgressEvent event) {
+      if(isStarted(event) || isSeedStarted(event)) {
+         dataLines = new ArrayList<>();
+
+      }
       final int currentNFE = event.getCurrentNFE();
       if(event.getCurrentAlgorithm() != null && currentNFE / printInterval >= nfeCount) {
          nfeCount++;
@@ -54,20 +55,21 @@ public class CurrentBestObjectiveListener extends AbstractProgressListener {
             }
          }
 
-         dataLines.add(new String[] { String.valueOf(runNr), String.valueOf(event.getElapsedTime()),
-               String.valueOf(currentNFE), String.valueOf(minObj / priorBestObjValue) });
+         dataLines.add(new String[] { String.valueOf(experimentName), String.valueOf(runNr),
+               String.valueOf(event.getElapsedTime()), String.valueOf(currentNFE),
+               String.valueOf(minObj / priorBestObjValue) });
 
       }
       if(event.isSeedFinished()) {
          nfeCount = 0;
 
-         if(!Files.exists(Paths.get(resultPath, experimentName + ".csv"))) {
-            dataLines.add(0, new String[] { String.valueOf(runNr), "0", "0", "0" });
-            dataLines.add(0, new String[] { "run", "seconds", "evaluations", "objective_value" });
+         if(!Files.exists(Paths.get(listenerDir + "_bestObj.csv"))) {
+            dataLines.add(0, new String[] { String.valueOf(experimentName), String.valueOf(runNr), "0", "0", "0" });
+            dataLines.add(0, new String[] { "variant", "run", "seconds", "evaluations", "objective_value" });
          }
 
          try(PrintWriter pw = new PrintWriter(new FileOutputStream(
-               new File(Paths.get(resultPath, experimentName + ".csv").toString()), true /* append = true */))) {
+               new File(Paths.get(listenerDir + "_bestObj.csv").toString()), true /* append = true */))) {
             dataLines.stream().map(CSVUtil::convertToCSV).forEach(pw::println);
          } catch(final FileNotFoundException e1) {
             e1.printStackTrace();

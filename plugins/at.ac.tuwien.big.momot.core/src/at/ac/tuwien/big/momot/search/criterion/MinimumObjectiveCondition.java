@@ -25,6 +25,9 @@ public class MinimumObjectiveCondition extends ThresholdCondition {
    @Override
    public boolean shouldTerminate(final Algorithm algorithm) {
       final NondominatedPopulation p = algorithm.getResult();
+      // if (algorithm instanceof EvolutionaryAlgorithm) {
+      // ((EvolutionaryAlgorithm) algorithm).getPopulation()
+      // }
       double minObj = Double.POSITIVE_INFINITY;
       // Solution minSol = null;
       for(final Solution s : p) {
