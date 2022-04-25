@@ -1,0 +1,14 @@
+variant,run,idle_computed_objectives,predicted_steps,pred_plan_objectives,pred_plan_iter,pred_plan_runtime,runtime_obj_satisfied,max_runtime_if_obj_satisfied
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,0,"[1.5844927528867458, 37.0]",2,"[1.5844927528867458, 45.0]",5000,33.827209201,33.8269204,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,1,"[1.576995111040904, 40.0]",2,"[1.576995111040904, 36.0]",7400,39.015982,39.0156913,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,2,"[1.5628400864459768, 42.0]",2,"[1.548555679127497, 47.0]",5300,30.6644304,30.6641235,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,3,"[1.575115124148386, 32.0]",2,"[1.5891608158916541, 56.0]",7500,42.3600518,42.3598215,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,4,"[1.5751151241483858, 58.0]",2,"[1.5609430514520835, 42.0]",5200,36.9004246,36.9001565,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,5,"[1.5807483772247768, 45.0]",2,"[1.523478800089121, 55.0]",5300,38.254632400000006,38.2543138,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,6,"[1.576995111040904, 40.0]",2,"[1.5769951110409037, 54.0]",6900,41.301814900000004,41.3014783,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,7,"[1.571976816340213, 51.0]",2,"[1.5860503004493762, 37.0]",6900,39.001871400000006,39.0015043,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,8,"[1.589160815891655, 49.0]",2,"[1.5029189705698587, 54.0]",3700,32.4258582,32.425419,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,9,"[1.583245611605055, 34.0]",2,"[1.5260697523012792, 78.0]",3700,29.043712900000003,29.0434832,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,10,"[1.5634719199411433, 42.0]",2,"[1.577621275493231, 45.0]",5000,37.872081800000004,37.871648,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,11,"[1.4907119849998598, 40.0]",2,"[1.577621275493231, 47.0]",4400,30.6983381,30.6980641,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,12,"[1.575115124148386, 43.0]",2,"[1.5891608158916546, 51.0]",3500,29.728055500000004,29.7277948,20.0

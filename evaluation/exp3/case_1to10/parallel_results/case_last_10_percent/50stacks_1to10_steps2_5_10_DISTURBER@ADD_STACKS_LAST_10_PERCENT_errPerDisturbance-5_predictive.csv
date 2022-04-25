@@ -1,0 +1,22 @@
+variant,run,idle_computed_objectives,predicted_steps,pred_plan_objectives,pred_plan_iter,pred_plan_runtime,runtime_obj_satisfied,max_runtime_if_obj_satisfied
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,0,"[1.5113892684087566, 28.0]",2,"[1.570387118668304, 31.0]",13300,46.1041606,46.1039087,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,1,"[1.5819226715749966, 41.0]",2,"[1.5703871186683036, 50.0]",4900,33.117621,33.1173302,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,2,"[1.5819226715749966, 41.0]",5,"[1.5113892684087564, 10.0]",17000,50.0301088,34.8623249,50.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,3,"[1.547057991722374, 39.0]",2,"[1.593374712742301, 51.0]",4200,28.7544311,28.7538657,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,4,"[1.5703871186683038, 43.0]",2,"[1.5819226715749966, 46.0]",7400,42.3508341,42.3505971,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,5,"[1.558766199952931, 89.0]",2,"[1.5819226715749963, 35.0]",7000,35.881929,35.8816868,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,6,"[1.5703871186683038, 68.0]",2,"[1.581922671574996, 42.0]",7300,34.3259679,34.3254644,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,7,"[1.5819226715749963, 24.0]",2,"[1.558766199952931, 58.0]",5700,34.9854743,34.9850037,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,8,"[1.5233716411384295, 50.0]",2,"[1.570387118668304, 36.0]",4900,30.022492600000003,30.0221332,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,9,"[1.5703871186683038, 45.0]",2,"[1.5352604969152395, 68.0]",3400,28.0830404,28.0827895,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,10,"[1.5703871186683038, 45.0]",5,"[1.4499928754455913, 16.0]",14700,50.0662681,33.2055464,50.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,11,"[1.5703871186683036, 45.0]",2,"[1.5703871186683038, 24.0]",8800,41.3563938,41.3560934,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,12,"[1.5819226715749963, 49.0]",2,"[1.5819226715749963, 69.0]",2900,22.4199637,22.4196239,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,13,"[1.4748581665944176, 35.0]",2,"[1.5703871186683038, 41.0]",7300,36.243044000000005,36.2427853,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,14,"[1.5819226715749963, 42.0]",2,"[1.5819226715749963, 71.0]",5500,33.4286967,33.4284479,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,15,"[1.5819226715749963, 42.0]",5,"[1.570387118668304, 18.0]",15400,50.0217273,37.2435957,50.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,16,"[1.5233716411384295, 48.0]",2,"[1.5819226715749963, 44.0]",8600,40.1498438,40.1495576,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,17,"[1.570387118668304, 41.0]",2,"[1.5819226715749966, 42.0]",6300,34.0063156,34.0060466,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,18,"[1.616035348602834, 54.0]",2,"[1.5587661999529314, 35.0]",6600,35.2549087,35.2546246,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,19,"[1.5703871186683038, 43.0]",2,"[1.5819226715749963, 43.0]",5400,31.081498800000002,31.0812146,20.0
+NSGAII_PlanningStrategy-ReplanningStrategy_PlanningStrategy-PredictivePlanning_0,20,"[1.5819226715749963, 39.0]",2,"[1.5819226715749966, 38.0]",9100,50.7014718,50.7008302,20.0
