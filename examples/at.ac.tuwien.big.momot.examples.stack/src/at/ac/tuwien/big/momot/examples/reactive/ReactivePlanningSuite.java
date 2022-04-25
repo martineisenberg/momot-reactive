@@ -17,8 +17,6 @@ import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.Planning;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.PredictiveReplanningStrategy;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.PredictiveReplanningStrategy.PredictiveReplanningType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.ReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult.PredictiveRunPlanningStats;
@@ -64,28 +62,12 @@ public class ReactivePlanningSuite {
    final static Heuristic h = StackHeuristic.getInstance();
    // ----------- Planning Cases ------------ //
    final static List<Planning> PLANNING_STRATEGIES = Arrays.asList(
-         //
-         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-                     .castAsReplanningStrategy()
-                     .withPredictivePlanning(PredictiveReplanningStrategy
-                           .create("NSGAII", 1, List.of(2, 5, 10),
-                                 PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
-                           .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy())));
-   //
-   // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-   // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-   // .castAsReplanningStrategy()),
-   // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-   // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-   // .castAsReplanningStrategy().withReseedingInitialization(.1)));
-
-   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000), ReplanningStrategy.naive()),
-   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
-   // ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()),
-   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
-   // ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()
-   // .withReseedingInitialization(.1)));
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()),
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()
+                     .withReseedingInitialization(.1)),
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000), ReplanningStrategy.naive()));
 
    //
    // PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
@@ -131,7 +113,7 @@ public class ReactivePlanningSuite {
 
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
    // final static String PRINT_FILENAME = "50stacks_1to100_threshold_10.9436_predictive";
-   final static String PRINT_FILENAME = "50stacks_1to10_steps2_5_10";
+   final static String PRINT_FILENAME = "50stacks_1to100_10kevaluations";
 
    // final static String PRINT_FILENAME = "test";
 
@@ -187,7 +169,7 @@ public class ReactivePlanningSuite {
 
          if(RECORD_GENERATIONAL_EXECUTION_TIME) {
             final String outObjDevPath = Paths.get(PRINT_DIR, "listeners", "best_objectives").toString();
-            planner.addEventListener(new GenerationExecutionTimeListener(OBJ_INDEX, POPULATION_SIZE));
+            // planner.addEventListener(new GenerationExecutionTimeListener(OBJ_INDEX, POPULATION_SIZE));
          }
 
          final ReactiveExperiment experiment = new ReactiveExperiment(MomotUtil.eGraphOf(initialModelRes, true),
