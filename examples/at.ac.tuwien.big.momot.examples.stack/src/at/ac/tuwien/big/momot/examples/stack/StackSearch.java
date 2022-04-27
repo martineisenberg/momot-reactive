@@ -193,9 +193,13 @@ public class StackSearch implements IReactiveSearchInstance {
 
       for(final AbstractProgressListener l : listeners) {
          if(l instanceof SeedreuseProportionListener) {
-            ((SeedreuseProportionListener) l).setSeedSolution(initialPopulation.get(0));
+            if(initialPopulation != null && !initialPopulation.isEmpty()) {
+               ((SeedreuseProportionListener) l).setSeedSolution(initialPopulation.get(0));
+               experiment.addProgressListener(l);
+            }
+         } else {
+            experiment.addProgressListener(l);
          }
-         experiment.addProgressListener(l);
       }
 
       // if(recordBestObjective) {
