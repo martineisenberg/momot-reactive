@@ -56,15 +56,17 @@ public class CurrentBestObjectiveListener extends AbstractProgressListener {
          }
 
          dataLines.add(new String[] { String.valueOf(experimentName), String.valueOf(runNr),
-               String.valueOf(event.getElapsedTime()), String.valueOf(currentNFE),
-               String.valueOf(minObj / priorBestObjValue) });
+               String.valueOf(event.getElapsedTime()), String.valueOf(currentNFE), String.valueOf(minObj) });
 
       }
       if(event.isSeedFinished()) {
          nfeCount = 0;
 
+         dataLines.add(0, new String[] { String.valueOf(experimentName), String.valueOf(runNr), "0", "0",
+               String.valueOf(this.priorBestObjValue) });
+
          if(!Files.exists(Paths.get(listenerDir + "_bestObj.csv"))) {
-            dataLines.add(0, new String[] { String.valueOf(experimentName), String.valueOf(runNr), "0", "0", "0" });
+
             dataLines.add(0, new String[] { "variant", "run", "seconds", "evaluations", "objective_value" });
          }
 

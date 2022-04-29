@@ -409,7 +409,7 @@ public class ReactiveExperiment {
 
       int experimentId = 0;
       for(final Planning planning : plannings) {
-         final String expName = getExperimentName(planning, experimentId++);
+         final String expName = getExperimentName(planning, experimentId);
          // resultPerExperiment.put(expName, new ReactiveExperimentResult());
 
          final ReactiveExperimentResult experimentStats = new ReactiveExperimentResult();
@@ -418,12 +418,13 @@ public class ReactiveExperiment {
                   String.format("%s (Strategy: %s) -> run %d/%d",
                         planning.getPlanningStrategy().getInitialSearchAlgorithm(), planning.getReplanningStrategy(),
                         j + 1, nr_runs));
-            planner.setupEventListeners(listenerBase, expName, experimentId);
+            planner.setupEventListeners(listenerBase, expName, j + 1);
 
             final ReactiveRunResult reactiveRunRes = run(MomotUtil.copy(initialGraph), planning);
             experimentStats.addRunResult(reactiveRunRes);
          }
          resultPerExperiment.put(expName, experimentStats);
+         experimentId++;
 
       }
       return resultPerExperiment;

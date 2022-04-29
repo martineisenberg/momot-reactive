@@ -1,6 +1,6 @@
 package at.ac.tuwien.big.moea.experiment.executor.listener;
 
-import at.ac.tuwien.big.moea.problem.solution.variable.IPlaceholderVariable;
+import at.ac.tuwien.big.moea.problem.solution.variable.PlaceholderVariable;
 import at.ac.tuwien.big.moea.search.algorithm.reinforcement.datastructures.ApplicationState;
 import at.ac.tuwien.big.moea.util.CSVUtil;
 
@@ -18,16 +18,19 @@ import java.util.Map;
 import org.eclipse.emf.henshin.interpreter.Assignment;
 import org.eclipse.emf.henshin.interpreter.UnitApplication;
 import org.eclipse.emf.henshin.model.Parameter;
+import org.moeaframework.analysis.collector.Accumulator;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.Variable;
 import org.moeaframework.util.progress.ProgressEvent;
 
 public class SeedreuseProportionListener extends AbstractProgressListener {
 
    private List<String[]> dataLines;
-   private List<ApplicationState> seedApps;
+   private final List<ApplicationState> seedApps;
 
    public SeedreuseProportionListener() {
+      this.seedApps = new ArrayList<>();
 
    }
 
@@ -59,25 +62,31 @@ public class SeedreuseProportionListener extends AbstractProgressListener {
       if(event.isSeedFinished()) {
 
          if(!Files.exists(Paths.get(listenerDir + "_seedreuseProportion.csv"))) {
-            dataLines.add(0, new String[] { "variant", "run", "seconds", "evaluations", "overlap_seeded_rules",
-                  "solution_rules", "seeded_rules" });
+            dataLines.add(0, new String[] { "variant", "run", "solution_nr", "runtime", "evaluations", "solution_rules",
+                  "overlap_seeded_rules", "seeded_rules" });
          }
+         // event.getExecutor().getInstrumenter().getLastAccumulator().get("p, runNr)
 
-         final NondominatedPopulation ndp = event.getCurrentAlgorithm().getResult();
+         final Accumulator a = event.getExecutor().getInstrumenter().getLastAccumulator();
+         final ArrayList<Solution> population = (ArrayList<Solution>) a.get("Population", a.size("Population") - 1);
+         final NondominatedPopulation ndp = new NondominatedPopulation(population);
 
+         int solutionNr = 0;
          for(final Solution s : ndp) {
             final List<ApplicationState> curSolStates = new ArrayList<>();
             for(int i = 0; i < s.getNumberOfVariables(); i++) {
-               final UnitApplication ua = (UnitApplication) s.getVariable(i);
-               if(!(ua instanceof IPlaceholderVariable)) {
+               final Variable v = s.getVariable(i);
+               if(!(v instanceof PlaceholderVariable)) {
+                  final UnitApplication ua = (UnitApplication) v;
                   curSolStates.add(new ApplicationState(ua.getUnit(), this.extractParameters(ua.getAssignment())));
                }
             }
 
             final long noOverlaps = curSolStates.stream().filter(seedApps::contains).count();
             dataLines.add(new String[] { String.valueOf(experimentName), String.valueOf(runNr),
-                  String.valueOf(event.getElapsedTime()), String.valueOf(event.getCurrentNFE()),
-                  String.valueOf(noOverlaps), String.valueOf(curSolStates.size()), String.valueOf(seedApps.size()) });
+                  String.valueOf(solutionNr++), String.valueOf(event.getElapsedTime()),
+                  String.valueOf(event.getMaxNFE()), String.valueOf(curSolStates.size()), String.valueOf(noOverlaps),
+                  String.valueOf(seedApps.size()) });
 
          }
 

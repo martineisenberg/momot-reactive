@@ -4,6 +4,7 @@ import at.ac.tuwien.big.moea.SearchExperiment;
 import at.ac.tuwien.big.moea.SearchResultManager;
 import at.ac.tuwien.big.moea.experiment.executor.SearchExecutor;
 import at.ac.tuwien.big.moea.experiment.executor.listener.AbstractProgressListener;
+import at.ac.tuwien.big.moea.experiment.executor.listener.CurrentBestObjectiveListener;
 import at.ac.tuwien.big.moea.experiment.executor.listener.SeedreuseProportionListener;
 import at.ac.tuwien.big.moea.experiment.executor.listener.SingleSeedPrintListener;
 import at.ac.tuwien.big.moea.print.ISolutionWriter;
@@ -28,6 +29,9 @@ import at.ac.tuwien.big.momot.search.criterion.ThresholdCondition;
 import at.ac.tuwien.big.momot.search.fitness.IEGraphMultiDimensionalFitnessFunction;
 import at.ac.tuwien.big.momot.util.MomotUtil;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,6 +45,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.henshin.interpreter.EGraph;
 import org.moeaframework.analysis.collector.Accumulator;
 import org.moeaframework.analysis.collector.ElapsedTimeCollector;
+import org.moeaframework.analysis.collector.PopulationCollector;
 import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.TerminationCondition;
@@ -60,7 +65,7 @@ public class StackSearch implements IReactiveSearchInstance {
 
    private static final int MAX_EVALUATIONS = 20000;
 
-   protected static final String PRINT_OBECJTIVE_DEV_DIRECTORY = "output/simulation/best_obj_recordings";
+   protected static final String PRINT_OBECJTIVE_DEV_DIRECTORY = "output/simulation/listeners";
    protected static final int RECORD_OBJECTIVE_INDEX = 0;
 
    private static Map<String, Integer> OBJECTIVE_INDICES;
@@ -184,12 +189,17 @@ public class StackSearch implements IReactiveSearchInstance {
    protected SearchExperiment<TransformationSolution> createExperiment(
          final TransformationSearchOrchestration orchestration, final int evaluations,
          final TerminationCondition terminationCondition, final List<AbstractProgressListener> listeners,
-         final List<List<ITransformationVariable>> initialPopulation) {
+         final List<List<ITransformationVariable>> initialPopulation, final double initialModelObjValue) {
       final SearchExperiment<TransformationSolution> experiment = new SearchExperiment<>(orchestration, evaluations,
             terminationCondition);
       experiment.setNumberOfRuns(NR_RUNS);
       experiment.addProgressListener(new SingleSeedPrintListener());
       experiment.addCustomCollector(new ElapsedTimeCollector());
+      experiment.addCustomCollector(new PopulationCollector());
+
+      if(!Files.exists(Paths.get(PRINT_OBECJTIVE_DEV_DIRECTORY))) {
+         new File(PRINT_OBECJTIVE_DEV_DIRECTORY).mkdirs();
+      }
 
       for(final AbstractProgressListener l : listeners) {
          if(l instanceof SeedreuseProportionListener) {
@@ -197,6 +207,10 @@ public class StackSearch implements IReactiveSearchInstance {
                ((SeedreuseProportionListener) l).setSeedSolution(initialPopulation.get(0));
                experiment.addProgressListener(l);
             }
+         } else if(l instanceof CurrentBestObjectiveListener) {
+            ((CurrentBestObjectiveListener) l).setPriorBestObjValue(initialModelObjValue);
+            experiment.addProgressListener(l);
+
          } else {
             experiment.addProgressListener(l);
          }
@@ -477,10 +491,12 @@ public class StackSearch implements IReactiveSearchInstance {
       // orchestration.getFitnessFunction().evaluate(ts);
       // reinitBestObj = ts.getObjective(0);
       // }
-
       // printSearchInfo(orchestration);
+
       final SearchExperiment<TransformationSolution> experiment = createExperiment(orchestration,
-            conf.getMaxEvaluations(), conf.getTerminationCondition(), listeners, conf.getInitialPopulation());
+            conf.getMaxEvaluations(), conf.getTerminationCondition(), listeners, conf.getInitialPopulation(),
+            MomotUtil.calculateObjectiveOnModel("Standard Deviation", orchestration.getFitnessFunction(),
+                  conf.getStartingState(), new ArrayList<>()));
       experiment.run();
 
       SOLUTION_WRITER = experiment.getSearchOrchestration().createSolutionWriter();

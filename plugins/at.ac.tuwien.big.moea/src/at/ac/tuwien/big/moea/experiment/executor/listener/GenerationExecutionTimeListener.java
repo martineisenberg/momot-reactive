@@ -1,5 +1,6 @@
 package at.ac.tuwien.big.moea.experiment.executor.listener;
 
+import at.ac.tuwien.big.moea.problem.solution.variable.PlaceholderVariable;
 import at.ac.tuwien.big.moea.util.CSVUtil;
 
 import java.io.File;
@@ -12,9 +13,8 @@ import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 
-import org.moeaframework.core.Algorithm;
-import org.moeaframework.core.EvolutionaryAlgorithm;
-import org.moeaframework.core.Population;
+import org.moeaframework.analysis.collector.Accumulator;
+import org.moeaframework.core.Solution;
 import org.moeaframework.util.progress.ProgressEvent;
 
 public class GenerationExecutionTimeListener extends AbstractProgressListener {
@@ -31,6 +31,20 @@ public class GenerationExecutionTimeListener extends AbstractProgressListener {
       this.printInterval = printInterval;
    }
 
+   private List<Integer> getPlanSizeWithoutPlaceholders(final List<Solution> sList) {
+      final List<Integer> lengths = new ArrayList<>();
+      for(final Solution s : sList) {
+         int nrOfUnitApps = 0;
+         for(int i = 0; i < s.getNumberOfVariables(); i++) {
+            if(!(s.getVariable(i) instanceof PlaceholderVariable)) {
+               nrOfUnitApps++;
+            }
+         }
+         lengths.add(nrOfUnitApps);
+      }
+      return lengths;
+   }
+
    @Override
    public void update(final ProgressEvent event) {
       if(isStarted(event) || isSeedStarted(event)) {
@@ -42,19 +56,22 @@ public class GenerationExecutionTimeListener extends AbstractProgressListener {
       if(event.getCurrentAlgorithm() != null && currentNFE / printInterval >= nfeCount) {
          nfeCount++;
 
-         final Algorithm a = event.getCurrentAlgorithm();
-         Population curP = null;
-         if(a instanceof EvolutionaryAlgorithm) {
-            curP = ((EvolutionaryAlgorithm) a).getPopulation();
-         }
+         // final Algorithm a = event.getCurrentAlgorithm();
 
-         final List<Double> planLength = new ArrayList<>();
+         final Accumulator a = event.getExecutor().getInstrumenter().getLastAccumulator();
+         final ArrayList<Solution> population = (ArrayList<Solution>) a.get("Population", a.size("Population") - 1);
 
-         curP.forEach(s -> {
-            planLength.add((double) s.getNumberOfVariables());
-         });
+         // Population curP = null;
+         // if(a instanceof EvolutionaryAlgorithm) {
+         // curP = ((EvolutionaryAlgorithm) a).getPopulation();
+         // }
 
-         final DoubleSummaryStatistics stat = planLength.stream().mapToDouble(Double::valueOf).summaryStatistics();
+         final List<Integer> planLengths = getPlanSizeWithoutPlaceholders(population);
+         // curP.forEach(s -> {
+         // planLength.add((double) s.getNumberOfVariables());
+         // });
+
+         final DoubleSummaryStatistics stat = planLengths.stream().mapToDouble(Double::valueOf).summaryStatistics();
 
          dataLines.add(new String[] { String.valueOf(experimentName), String.valueOf(runNr),
                String.valueOf(event.getElapsedTime()), String.valueOf(currentNFE), String.valueOf(stat.getAverage()),

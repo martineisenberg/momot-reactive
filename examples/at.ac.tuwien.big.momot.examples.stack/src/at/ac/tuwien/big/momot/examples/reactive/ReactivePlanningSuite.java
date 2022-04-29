@@ -19,8 +19,6 @@ import at.ac.tuwien.big.momot.reactive.error.ErrorOccurence;
 import at.ac.tuwien.big.momot.reactive.error.ErrorType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.Planning;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.PlanningStrategy;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.PredictiveReplanningStrategy;
-import at.ac.tuwien.big.momot.reactive.planningstrategy.PredictiveReplanningStrategy.PredictiveReplanningType;
 import at.ac.tuwien.big.momot.reactive.planningstrategy.ReplanningStrategy;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult;
 import at.ac.tuwien.big.momot.reactive.result.PredictiveRunResult.PredictiveRunPlanningStats;
@@ -68,27 +66,26 @@ public class ReactivePlanningSuite {
    // ----------- Planning Cases ------------ //
    final static List<Planning> PLANNING_STRATEGIES = Arrays.asList(
          //
-         Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-               ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-                     .castAsReplanningStrategy()
-                     .withPredictivePlanning(PredictiveReplanningStrategy
-                           .create("NSGAII", 1, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-                                 PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
-                           .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy())));
+         // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+         // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+         // .castAsReplanningStrategy()
+         // .withPredictivePlanning(PredictiveReplanningStrategy
+         // .create("NSGAII", 1, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+         // PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
+         // .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy())));
 
-   // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-   // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-   // .castAsReplanningStrategy()),
-   // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
-   // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
-   // .castAsReplanningStrategy().withReseedingInitialization(.1)));
+         // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+         // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+         // .castAsReplanningStrategy()),
+         // Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+         // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+         // .castAsReplanningStrategy().withReseedingInitialization(.1)));
 
-   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000), ReplanningStrategy.naive()),
-   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
-   // ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()),
-   // Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000),
-   // ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(10000).castAsReplanningStrategy()
-   // .withReseedingInitialization(.1)));
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(500),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(500).castAsReplanningStrategy()),
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(500),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(500).castAsReplanningStrategy()
+                     .withReseedingInitialization(.1)));
 
    //
    // PlanningStrategy.create("NSGAII", MinimumObjectiveCondition.create(objectiveThresholds),
@@ -116,7 +113,7 @@ public class ReactivePlanningSuite {
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
    final static int MAX_SOLUTION_LENGTH = 200;
    final static int POPULATION_SIZE = 100;
-   private static final int EXPERIMENT_RUNS = 30;
+   private static final int EXPERIMENT_RUNS = 2;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
    final static String OBJECTIVE_SELECTION_NAME = "SolutionLength";
 
@@ -129,14 +126,14 @@ public class ReactivePlanningSuite {
 
    /* OUTPUTS */
    final static boolean VERBOSE = false;
-   final static boolean RECORD_OBJECTIVE_DEVELOPMENT = false;
+   final static boolean RECORD_OBJECTIVE_DEVELOPMENT = true;
    final static boolean RECORD_GENERATIONAL_EXECUTION_TIME = false;
    final static boolean RECORD_SEEDREUSE_INFORMATION = false;
 
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
    // final static String PRINT_FILENAME = "50stacks_1to100_threshold_10.9436_predictive";
    // final static String PRINT_FILENAME = "50stacks_1to10_steps2_5_10";
-   final static String PRINT_FILENAME = "1to100_steps1to10";
+   final static String PRINT_FILENAME = "1to100_recordings";
 
    // final static String PRINT_FILENAME = "test";
 
