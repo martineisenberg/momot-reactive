@@ -81,10 +81,10 @@ public class ReactivePlanningSuite {
          // ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
          // .castAsReplanningStrategy().withReseedingInitialization(.1)));
 
-         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(500),
-               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(500).castAsReplanningStrategy()),
-         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(500),
-               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(500).castAsReplanningStrategy()
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(20000),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(20000).castAsReplanningStrategy()),
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withMaxEvaluations(20000),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(20000).castAsReplanningStrategy()
                      .withReseedingInitialization(.1)));
 
    //
@@ -113,13 +113,12 @@ public class ReactivePlanningSuite {
    final static String HENSHIN_MODULE = Paths.get("model", "stack.henshin").toString();
    final static int MAX_SOLUTION_LENGTH = 200;
    final static int POPULATION_SIZE = 100;
-   private static final int EXPERIMENT_RUNS = 2;
+   private static final int EXPERIMENT_RUNS = 30;
    final static String EVAL_OBJECTIVE = "Standard Deviation";
    final static String OBJECTIVE_SELECTION_NAME = "SolutionLength";
 
    /* DISTURBER CONFIGURATION */
-   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.ADD_STACKS,
-         ErrorType.REMOVE_STACKS);
+   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.REMOVE_STACKS);
    private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT,
          ErrorOccurence.MIDDLE_10_PERCENT, ErrorOccurence.LAST_10_PERCENT);
    final static int ERRORS_PER_DISTURBANCE = 5;
@@ -127,8 +126,8 @@ public class ReactivePlanningSuite {
    /* OUTPUTS */
    final static boolean VERBOSE = false;
    final static boolean RECORD_OBJECTIVE_DEVELOPMENT = true;
-   final static boolean RECORD_GENERATIONAL_EXECUTION_TIME = false;
-   final static boolean RECORD_SEEDREUSE_INFORMATION = false;
+   final static boolean RECORD_GENERATIONAL_EXECUTION_TIME = true;
+   final static boolean RECORD_SEEDREUSE_INFORMATION = true;
 
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
    // final static String PRINT_FILENAME = "50stacks_1to100_threshold_10.9436_predictive";
