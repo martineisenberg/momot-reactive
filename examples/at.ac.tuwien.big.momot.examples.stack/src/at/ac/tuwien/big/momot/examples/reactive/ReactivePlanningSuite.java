@@ -118,7 +118,7 @@ public class ReactivePlanningSuite {
    final static String OBJECTIVE_SELECTION_NAME = "SolutionLength";
 
    /* DISTURBER CONFIGURATION */
-   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.REMOVE_STACKS);
+   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.ADD_STACKS);
    private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT,
          ErrorOccurence.MIDDLE_10_PERCENT, ErrorOccurence.LAST_10_PERCENT);
    final static int ERRORS_PER_DISTURBANCE = 5;
