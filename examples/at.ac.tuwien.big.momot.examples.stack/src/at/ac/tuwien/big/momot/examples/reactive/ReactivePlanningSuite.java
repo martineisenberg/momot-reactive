@@ -105,7 +105,7 @@ public class ReactivePlanningSuite {
    // PlanningStrategy.create("NSGAII", 10000, NaivePlanningStrategy.get()));
 
    // ----------- Model, Algorithm ------------ //
-   final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std50_2500_27.359.xmi").toString();
+   final static String INITIAL_MODEL = Paths.get("model", "model_fifty_stacks_std5_250_3.181.xmi").toString();
    // final static String INITIAL_MODEL = Paths.get("model", "gen100_1to100.xmi").toString();
 
    // final static String INITIAL_MODEL = Paths.get("model", "model_ten_stacks.xmi").toString();
@@ -132,7 +132,7 @@ public class ReactivePlanningSuite {
    final static String PRINT_DIR = Paths.get("output", "simulation").toString();
    // final static String PRINT_FILENAME = "50stacks_1to100_threshold_10.9436_predictive";
    // final static String PRINT_FILENAME = "50stacks_1to10_steps2_5_10";
-   final static String PRINT_FILENAME = "1to100_recordings";
+   final static String PRINT_FILENAME = "1to10_recordings";
 
    // final static String PRINT_FILENAME = "test";
 
