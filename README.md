@@ -1,316 +1,82 @@
 # MOMoT for Reactive Use at Runtime
 
-This repository holds the core of the MOMoT framework ([source](https://github.com/martin-fleck/momot), [project page](http://martin-fleck.github.io/momot/)) with extensions to support reinforcement rearning (RL)
-methods. It evaluates the tool for (re)planning at runtime.
+This project demonstrates a reactive planning approach that integrates Digital Twins (DTs) with planning approaches to deal with uncertainty in the exposed environment. The MOMoT Framework for model-driven optimization hereby acts as planning unit for system operations. It represents problem domains by means of Ecore meta-models and problem instances as models to be optimized through executing graph transformation rules. The DT carries is capable to automatically detect and treat unforeseen changes that affect operation. The project considers a case study to demonstrate the reactive planning frameworks feasibility and potential to optimize system performance.
 
-Executing StackRuntimeSimulator.java in the stack exmaple source results in the following output:
+The repository holds the core of the MOMoT framework ([source](https://github.com/martin-fleck/momot), [project page](http://martin-fleck.github.io/momot/)) with extensions to simulate a running system and invoke replanning as instructed by the DT. The following sections briefly introduces the background, the case study, the configurable components, and the output.
 
-<details>
-  <summary>Click to show console output</summary>
-  
-  ```
-##########################################################################################
-INITIAL INPUT MODEL
-##########################################################################################
+## About
 
-Stack_1 Stack_2 Stack_3 Stack_4 Stack_5
-1 7 3 9 5
+In this prototype we test our reactive planning approach as we employ a model-driven optimization framework, MOMoT, as the planning unit for a given running system.
+The reactive planning architecture involves a DT that keeps track of the systems **current runtime model** and the **expected runtime model** based on planned operations. When
+a descrepancy is detected by the **Conformance Checker**, e.g., caused by perturbation, the **Decision Maker** may trigger a replanning process. Depending on the configuration the **Plan Preparer** invokes
+the planner to find a new plan compliant with user and system specification. A new plan will then be deployed later by the DT to continue or maintain system operation in the best found
+way. The goal we pursue with such integrated DT systems is to improve plans at runtime, adapt to unforeseen disturbances quickly, and consider replanning parallel to execution to mitigate idle states.
 
-##########################################################################################
-NSGAII (1/2)
-##########################################################################################
+## Case study
 
-##################################
-INITIAL PLAN
-##################################
+A _StackModel_ consists of up to multiple *Stack*s with a load each. The goal in this case study is to apply shift-operations in form of two rules, _shiftLeft_ and _shiftRight_, where a certain amount is
+transfered from the source stack to its left or right neighbour, i.e., the target stack. A plan for execution is determined as an ordered sequences of rule applications. Hereby, the standard deviations should be minimized, which poses the primary objective for operation planning.
 
-Run 'NSGAII' 1 times...
-WARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access by at.ac.tuwien.big.moea.experiment.instrumenter.SearchInstrumenter (file:/C:/Users/sigi/Desktop/uni/CDL_Mint/Projekte/dt_stack/initial/plugins/at.ac.tuwien.big.moea/target/classes/) to field java.util.HashSet.serialVersionUID
-WARNING: Please consider reporting this to the maintainers of at.ac.tuwien.big.moea.experiment.instrumenter.SearchInstrumenter
-WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
-WARNING: All illegal access operations will be denied in a future release
-[15:41:06.574] Run 1 of 1 started.
-[15:41:09.415] Run 1 of 1 terminated after 00:00:02.837 (2837 ms).
-[15:41:09.416] Total runtime for 1 seeds: 00:00:02.842 (2842 ms).
-Number of variables: 3
-Variable[0]: Match for rule 'shiftRight':
+<figure>
 
-- parameter 'fromId' => 'Stack_5'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 4
+<img src="./examples/at.ac.tuwien.big.momot.examples.stack/model/stack.svg" alt="Stack Meta-Model">
+<figcaption><b>Meta-Model: Stack Load Balancing Case Study</b></figcaption>
+</figure>
 
-  Variable[1]: Match for rule 'shiftRight':
+More information on the case study and a model-driven solution using MOMoT can be found [here](http://martin-fleck.github.io/momot/casestudy/stack/).
 
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_5'
-- parameter 'amount' => 3
+## Configuration
 
-  Variable[2]: Match for rule 'shiftRight':
+The utilities for reactive planning are implemented in the MOMoT core plugins as provided in this project. They are utilized to configure the planning setup for the case study in an own project (_./examples/at.ac.tuwien.big.momot.examples.stack_), which involves a planning strategy and the disturber component. Regarding the former, the planner may search for a plan that suffices certain quality requirements or runs for fixed number of algorithm evaluations.
 
-- parameter 'fromId' => 'Stack_2'
-- parameter 'toId' => 'Stack_3'
-- parameter 'amount' => 2
+Defining quality requirements and planning strategies:
 
-Number of attributes: 1
-AggregatedFitness: 3.632455532033676
-Number of objectives: 2
-Standard Deviation: 0.6324555320336759
-SolutionLength: 3.0
-Number of constraints: 0
+```java
+   /* PLANNING CONFIGURATION */
+   final static double OBJECTIVE_THRESHOLD = 1.5905; // Search plan with standard deviation of 1.5905 at maximum
+   final static int OBJ_INDEX = 0; // 0 = standard deviation for stack allocation case study
+   final static Map<Integer, Double> objectiveThresholds = Map.of(OBJ_INDEX, OBJ_THRESHOLD);
 
-##################################
-🛑 CHANGE EVENT
-##################################
-
------PLAN EXECUTED SO FAR (1/3 Rules)-----
-
-Number of variables: 1
-Variable[0]: Match for rule 'shiftRight':
-
-- parameter 'fromId' => 'Stack_5'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 4
-
-Number of attributes: 1
-AggregatedFitness: 3.8284271247461903
-Number of objectives: 2
-Standard Deviation: 2.8284271247461903
-SolutionLength: 1.0
-Number of constraints: 0
-
------RESULT MODEL (after planned execution so far)-----
-
-Stack_1 Stack_2 Stack_3 Stack_4 Stack_5
-5 7 3 9 1
-
------MODEL CHANGE (added stack)-----
-
-Stack_1 Stack_2 Stack_3 Stack_4 Stack_5 Stack_6
-5 7 3 9 1 0
-
-##################################
-REPLANNING (1)
-##################################
-
-Run 'NSGAII' 1 times...
-[15:41:09.697] Run 1 of 1 started.
-[15:41:11.287] Run 1 of 1 terminated after 00:00:01.590 (1590 ms).
-[15:41:11.287] Total runtime for 1 seeds: 00:00:01.590 (1590 ms).
-Number of variables: 3
-Variable[0]: Match for rule 'shiftRight':
-
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_5'
-- parameter 'amount' => 4
-
-  Variable[1]: Match for rule 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_2'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 3
-
-  Variable[2]: Match for rule 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_1'
-- parameter 'toId' => 'Stack_6'
-- parameter 'amount' => 4
-
-Number of attributes: 1
-AggregatedFitness: 3.6871842709362768
-Number of objectives: 2
-Standard Deviation: 0.6871842709362768
-SolutionLength: 3.0
-Number of constraints: 0
-
-##########################################################################################
-QLearning (2/2)
-##########################################################################################
-
-##################################
-INITIAL PLAN
-##################################
-
-Run 'QLearning' 1 times...
-[15:41:11.335] Run 1 of 1 started.
-[15:41:24.142] Run 1 of 1 terminated after 00:00:12.805 (12805 ms).
-[15:41:24.142] Total runtime for 1 seeds: 00:00:12.806 (12806 ms).
-Number of variables: 5
-Variable[0]: Assignment for unit 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_3'
-- parameter 'amount' => 2
-  Match for rule 'shiftLeft':
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_3'
-- parameter 'amount' => 2
-
-  Variable[1]: Assignment for unit 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_2'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 2
-  Match for rule 'shiftLeft':
-- parameter 'fromId' => 'Stack_2'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 2
-
-  Variable[2]: Assignment for unit 'shiftRight':
-
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_5'
-- parameter 'amount' => 2
-  Match for rule 'shiftRight':
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_5'
-- parameter 'amount' => 2
-
-  Variable[3]: Match for rule 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_1'
-- parameter 'toId' => 'Stack_5'
-- parameter 'amount' => 1
-
-  Variable[4]: Match for rule 'shiftRight':
-
-- parameter 'fromId' => 'Stack_5'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 3
-
-Number of attributes: 1
-AggregatedFitness: 5.0
-Number of objectives: 2
-Standard Deviation: 0.0
-SolutionLength: 5.0
-Number of constraints: 0
-
-##################################
-🛑 CHANGE EVENT
-##################################
-
------PLAN EXECUTED SO FAR (1/5 Rules)-----
-
-Number of variables: 1
-Variable[0]: Assignment for unit 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_3'
-- parameter 'amount' => 2
-  Match for rule 'shiftLeft':
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_3'
-- parameter 'amount' => 2
-
-Number of attributes: 1
-AggregatedFitness: 3.1908902300206643
-Number of objectives: 2
-Standard Deviation: 2.1908902300206643
-SolutionLength: 1.0
-Number of constraints: 0
-
------RESULT MODEL (after planned execution so far)-----
-
-Stack_1 Stack_2 Stack_3 Stack_4 Stack_5
-1 7 5 7 5
-
------MODEL CHANGE (added stack)-----
-
-Stack_1 Stack_2 Stack_3 Stack_4 Stack_5 Stack_6
-1 7 5 7 5 0
-
-##################################
-REPLANNING (1)
-##################################
-
-Run 'QLearning' 1 times...
-[15:41:24.207] Run 1 of 1 started.
-[15:41:38.108] Run 1 of 1 terminated after 00:00:13.902 (13902 ms).
-[15:41:38.109] Total runtime for 1 seeds: 00:00:13.902 (13902 ms).
-Number of variables: 5
-Variable[0]: Assignment for unit 'shiftLeft':
-
-- parameter 'fromId' => 'Stack_2'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 4
-  Match for rule 'shiftLeft':
-- parameter 'fromId' => 'Stack_2'
-- parameter 'toId' => 'Stack_1'
-- parameter 'amount' => 4
-
-  Variable[1]: Assignment for unit 'shiftRight':
-
-- parameter 'fromId' => 'Stack_3'
-- parameter 'toId' => 'Stack_4'
-- parameter 'amount' => 1
-  Match for rule 'shiftRight':
-- parameter 'fromId' => 'Stack_3'
-- parameter 'toId' => 'Stack_4'
-- parameter 'amount' => 1
-
-  Variable[2]: Assignment for unit 'shiftRight':
-
-- parameter 'fromId' => 'Stack_1'
-- parameter 'toId' => 'Stack_2'
-- parameter 'amount' => 1
-  Match for rule 'shiftRight':
-- parameter 'fromId' => 'Stack_1'
-- parameter 'toId' => 'Stack_2'
-- parameter 'amount' => 1
-
-  Variable[3]: Match for rule 'shiftRight':
-
-- parameter 'fromId' => 'Stack_4'
-- parameter 'toId' => 'Stack_5'
-- parameter 'amount' => 4
-
-  Variable[4]: Match for rule 'shiftRight':
-
-- parameter 'fromId' => 'Stack_5'
-- parameter 'toId' => 'Stack_6'
-- parameter 'amount' => 5
-
-Number of attributes: 1
-AggregatedFitness: 5.372677996249965
-Number of objectives: 2
-Standard Deviation: 0.37267799624996495
-SolutionLength: 5.0
-Number of constraints: 0
-
-```
-</details>
+   final static List<Planning> PLANNING_STRATEGIES = Arrays.asList(
+        // Strategy 1: Initinal plan to reach objective, replan for 20,000 evaluations
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withObjectiveThresholds(objectiveThresholds),
+               ReplanningStrategy.create("NSGAII", 0).withMaxEvaluations(20000).asReplanningStrategy()),
+        // Strategy 2: Initial plan to reach objective, replan using "Naive repair"
+         Planning.create(PlanningStrategy.create("NSGAII", 0).withObjectiveThresholds(objectiveThresholds),
+               ReplanningStrategy.naive())
+    );
 ```
 
-Generated models and plans will be saved as defined with _OUT_BASE_PATH_.
-The generated summary.txt has the following format:
+Instead of a simple replanning approach, "replanning-on-the-fly" allows for replanning while system operation continues with feasible operations of the remaining plan. Therefore, the system state is forecasted
+for a certain number of steps depening on the operations executed next to planning, and a new plan determined to proceed from that expected state.
 
-<details>
-  <summary>Click to show summary.txt output</summary>
-  
-  ```
-##########################################################################################
-NSGAII
-##########################################################################################
-
-##################################
-DIFFERENCE STATS
-##################################
-
-Initial Plan: [0.6324555320336759, 3.0]
-Without replanning: [1.950783318453271, 2.0]
-With replanning: [0.6871842709362768, 3.0]
-##########################################################################################
-QLearning
-##########################################################################################
-
-##################################
-DIFFERENCE STATS
-##################################
-
-Initial Plan: [0.0, 5.0]
-Without replanning: [2.4776781245530843, 3.0]
-With replanning: [0.37267799624996495, 5.0]
-
+```java
+   final static List<Planning> PLANNING_STRATEGIES = Arrays.asList(
+         // Initial plan to reach objective, replan from forecasted state (x+1, x+2, ..., x+10)
+         // for available time while system keeps exeuting and until threshold is reached
+          Planning.create(PlanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds),
+          ReplanningStrategy.create("NSGAII", 1).withObjectiveThresholds(objectiveThresholds)
+          .castAsReplanningStrategy()
+          .withPredictivePlanning(PredictiveReplanningStrategy
+          .create("NSGAII", 1, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+          PredictiveReplanningType.TERMINATE_AFTER_TIME_IF_OBJECTIVE_SATISFIED, 10)
+          .withObjectiveThresholds(objectiveThresholds).castAsPredictiveReplanningStrategy()))
+    );
 ```
-</details>
+
+The disturber simulates the effects of the system operating in an uncertain environment. It causes unplannend changes amid execution of the current plan. Therefore, such perturbances can
+be set to occur as the current plan is executed, either in the first/middle/last 10% of planned operations. The type of change to the model is defined by a givven error type. The _ERRORS_PER_DISTURBANCE_ denotes the number of random operations to be executed when the disturbance arrises, and indicates its severity.
+
+```java
+   private static final List<ErrorType> ERROR_TYPE_LIST = ImmutableList.of(ErrorType.REMOVE_STACKS); // Perturbation involves removing stacks from model
+   private static final List<ErrorOccurence> ERROR_OCCURENCE_LIST = ImmutableList.of(ErrorOccurence.FIRST_10_PERCENT,
+         ErrorOccurence.MIDDLE_10_PERCENT, ErrorOccurence.LAST_10_PERCENT);
+   final static int ERRORS_PER_DISTURBANCE = 5;
 ```
+
+In a PlanningSuite setup, multiple planning strategies and/or disturbance configurations may be tested and recorded in a single run as is shown in the snippets above.
+
+## Output
+
+Runtime information and relevant results such as planning times, execution times, and obtained objective
+qualities for all runs in the executed suite are saved in the case studies project subfolder _./output/simulation_.
